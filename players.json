@@ -1,0 +1,100 @@
+[
+    {
+        "number": 1,
+        "name": "Player One",
+        "position": "GK",
+        "altPosition": "DEF",
+        "photo": "avatars/player1.jpg"
+    },
+    {
+        "number": 2,
+        "name": "Player Two",
+        "position": "DEF",
+        "altPosition": "MID",
+        "photo": "avatars/player2.jpg"
+    },
+    {
+        "number": 3,
+        "name": "Player Three",
+        "position": "DEF",
+        "altPosition": "MID",
+        "photo": "avatars/player3.jpg"
+    },
+    {
+        "number": 4,
+        "name": "Player Four",
+        "position": "DEF",
+        "altPosition": "FWD",
+        "photo": "avatars/player4.jpg"
+    },
+    {
+        "number": 5,
+        "name": "Player Five",
+        "position": "MID",
+        "altPosition": "DEF",
+        "photo": "avatars/player5.jpg"
+    },
+    {
+        "number": 6,
+        "name": "Player Six",
+        "position": "MID",
+        "altPosition": "FWD",
+        "photo": "avatars/player6.jpg"
+    },
+    {
+        "number": 7,
+        "name": "Player Seven",
+        "position": "MID",
+        "altPosition": "FWD",
+        "photo": "avatars/player7.jpg"
+    },
+    {
+        "number": 8,
+        "name": "Player Eight",
+        "position": "FWD",
+        "altPosition": "MID",
+        "photo": "avatars/player8.jpg"
+    },
+    {
+        "number": 9,
+        "name": "Player Nine",
+        "position": "FWD",
+        "altPosition": "MID",
+        "photo": "avatars/player9.jpg"
+    },
+    {
+        "number": 10,
+        "name": "Player Ten",
+        "position": "FWD",
+        "altPosition": "MID",
+        "photo": "avatars/player10.jpg"
+    },
+    {
+        "number": 11,
+        "name": "Player Eleven",
+        "position": "DEF",
+        "altPosition": "MID",
+        "photo": "avatars/player11.jpg"
+    },
+    {
+        "number": 12,
+        "name": "Player Twelve",
+        "position": "GK",
+        "altPosition": "DEF",
+        "photo": "avatars/player12.jpg"
+    },
+    {
+        "number": 13,
+        "name": "Player Thirteen",
+        "position": "DEF",
+        "altPosition": "MID",
+        "photo": "avatars/player13.jpg"
+    },
+    {
+        "number": 14,
+        "name": "Player Fourteen",
+        "position": "MID",
+        "altPosition": "FWD",
+        "photo": "avatars/player14.jpg"
+    }
+]

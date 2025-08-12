@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>U12 Football Team Manager</title>
+    <meta name="description"
+        content="Responsive 9v9 match-day manager with full-width layout, formations, timers, events and a Vue-powered player editor." />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0f172a" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="bg-slate-900 text-slate-100">
+    <header class="w-full border-b border-slate-800 bg-slate-950">
+
+<!-- Data Backup Controls -->
+<div class="backup-controls" style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0;">
+  <button id="exportBtn" class="btn">Export Data</button>
+  <label class="btn" style="cursor:pointer;">
+    Import Data
+    <input id="importInput" type="file" accept="application/json" hidden>
+  </label>
+</div>
+
+        <div class="shell px-3 sm:px-4 py-2.5 flex items-center gap-3">
+            <img src="logo.png" alt="Club Logo" class="w-7 h-7" />
+            <div class="font-semibold tracking-wide">U12 Football Team Manager</div>
+            <div class="ml-auto flex flex-wrap items-center gap-2">
+                <span class="font-mono text-base px-2 py-1 bg-slate-800 rounded" id="matchTimer">00:00</span>
+                <button id="startTimer" class="btn-green">Start</button>
+                <button id="pauseTimer" class="btn-amber">Pause</button>
+                <button id="resetTimer" class="btn-rose">Reset</button>
+                <input id="halfLengthInput" type="number" min="5" max="50" value="35" class="input w-14" />
+                <button id="startFirstHalf" class="btn">Start 1st</button>
+                <button id="startSecondHalf" class="btn">Start 2nd</button>
+                <span class="text-[11px] px-2 py-1 bg-slate-800 rounded">Half: <b id="currentHalfLabel">—</b> •
+                    Remaining: <b id="remainingTime">00:00</b></span>
+                <button id="openPlayerEditor" class="btn-blue">Edit Players</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="shell px-3 sm:px-4 py-3 grid-dashboard gap-3">
+        <section class="panel" style="grid-area:left">
+            <div class="panel-title flex items-center justify-between">
+                <span>Player Manager</span>
+                <button id="putStartersOnPitch" class="btn-green hidden">Put Starters</button>
+            </div>
+            <div class="text-[11px] opacity-70 mb-2">Team Line Up (All Players)</div>
+            <ul id="teamLineUpList" class="lineup text-sm"></ul>
+            <div class="flex gap-2 pt-2 sticky-actions">
+                <button id="saveFormation" class="btn">Save</button>
+                <button id="loadFormation" class="btn">Load</button>
+                <button id="saveFormationToMatch" class="btn-indigo">Attach To Match</button>
+            </div>
+        </section>
+
+        <section class="panel" style="grid-area:center">
+            <div class="panel-title flex items-center justify-between">
+                <span>Pitch & Formation</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs opacity-70">Template</span>
+                    <select id="autoFormationSelect" class="input">
+                        <option value="3-3-2">3–3–2 (default)</option>
+                        <option value="3-2-3">3–2–3</option>
+                        <option value="2-3-3">2–3–3</option>
+                        <option value="4-3-1">4–3–1</option>
+                    </select>
+                </div>
+            </div>
+            <div id="formationField"
+                class="relative h-[46vh] min-h-[320px] rounded-lg overflow-hidden border border-slate-800"></div>
+        </section>
+
+        <section class="panel" style="grid-area:right">
+            <div class="panel-title">Match Controls</div>
+            <div class="space-y-2.5">
+                <div class="flex gap-2">
+                    <select id="matchSelect" class="input flex-1">
+                        <option value="" disabled selected>— Select a match —</option>
+                    </select>
+                    <button id="newMatch" class="btn-green">New</button>
+                    <button id="deleteMatch" class="btn-rose">Delete</button>
+                </div>
+                <div class="panel-subtitle">Match Events</div>
+                <form id="eventForm" class="flex flex-col gap-2">
+                    <select id="eventType" class="input">
+                        <option value="Goal">Goal</option>
+                        <option value="Assist">Assist</option>
+                        <option value="Yellow/Red Card">Yellow/Red Card</option>
+                    </select>
+                    <select id="eventPlayer" class="input" required>
+                        <option value="" disabled selected>— Select Player —</option>
+                    </select>
+                    <select id="assistPlayer" class="input hidden">
+                        <option value="" selected>— Select Assist Player (optional) —</option>
+                    </select>
+                    <button class="btn-amber">Log Event</button>
+                </form>
+                <ul id="eventLog" class="list space-y-1 max-h-[28vh] overflow-auto"></ul>
+                <div class="flex gap-2">
+                    <button id="exportCSV" class="btn">Export CSV</button>
+                    <button onclick="window.print()" class="btn">Print</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" style="grid-area:bottom-left">
+            <div id="startersCounter" class="panel-title">Starters (0/9)</div>
+            <ul id="starterList" class="grid grid-cols-3 lg:grid-cols-4 gap-2"></ul>
+        </section>
+
+        <section class="panel" style="grid-area:bottom-right">
+            <div class="panel-title">Game Changers</div>
+            <ul id="benchList" class="grid grid-cols-3 lg:grid-cols-4 gap-2"></ul>
+        </section>
+    </main>
+
+    <div id="playerEditorModal" class="pe-modal hidden">
+        <div class="pe-backdrop"></div>
+        <div class="pe-panel">
+            <div id="playerEditorApp"></div>
+        </div>
+    </div>
+
+    <script id="playersData" type="application/json">
+[
+{"number":1,"name":"Player One","position":"GK","altPosition":"DEF","photo":"avatars/player1.jpg"},
+{"number":2,"name":"Player Two","position":"DEF","altPosition":"MID","photo":"avatars/player2.jpg"},
+{"number":3,"name":"Player Three","position":"DEF","altPosition":"MID","photo":"avatars/player3.jpg"},
+{"number":4,"name":"Player Four","position":"DEF","altPosition":"FWD","photo":"avatars/player4.jpg"},
+{"number":5,"name":"Player Five","position":"MID","altPosition":"DEF","photo":"avatars/player5.jpg"},
+{"number":6,"name":"Player Six","position":"MID","altPosition":"FWD","photo":"avatars/player6.jpg"},
+{"number":7,"name":"Player Seven","position":"MID","altPosition":"FWD","photo":"avatars/player7.jpg"},
+{"number":8,"name":"Player Eight","position":"FWD","altPosition":"MID","photo":"avatars/player8.jpg"},
+{"number":9,"name":"Player Nine","position":"FWD","altPosition":"MID","photo":"avatars/player9.jpg"},
+{"number":10,"name":"Player Ten","position":"FWD","altPosition":"MID","photo":"avatars/player10.jpg"},
+{"number":11,"name":"Player Eleven","position":"DEF","altPosition":"MID","photo":"avatars/player11.jpg"},
+{"number":12,"name":"Player Twelve","position":"GK","altPosition":"DEF","photo":"avatars/player12.jpg"},
+{"number":13,"name":"Player Thirteen","position":"DEF","altPosition":"MID","photo":"avatars/player13.jpg"},
+{"number":14,"name":"Player Fourteen","position":"MID","altPosition":"FWD","photo":"avatars/player14.jpg"}
+]
+</script>
+
+    <script>
+        if ("serviceWorker" in navigator && location.protocol.startsWith("http")) { navigator.serviceWorker.register("service-worker.js") }
+    </script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="script.js" defer></script>
+    <script src="players-editor.js" defer></script>
+</body>
+
+</html>
