@@ -70,7 +70,7 @@
                         <option value="4-3-1">4–3–1</option>
                     </select>
 
-                    <!-- NEW: Pass controls -->
+                    <!-- Pass controls (this is the bit you were missing) -->
                     <span class="text-xs opacity-70 ml-2">Pass to</span>
                     <select id="passTargetSelect" class="input min-w-[12rem]">
                         <option value="" disabled selected>— Active player —</option>
@@ -78,9 +78,9 @@
                     <button id="passBtn" class="btn-amber">Pass</button>
                 </div>
             </div>
+
             <div id="formationField"
-                class="relative h-[46vh] min-h=[320px] min-h-[320px] rounded-lg overflow-hidden border border-slate-800">
-            </div>
+                class="relative h-[46vh] min-h-[320px] rounded-lg overflow-hidden border border-slate-800"></div>
         </section>
 
         <section class="panel" style="grid-area:right">
@@ -151,10 +151,12 @@
 {"number":13,"name":"Player Thirteen","position":"DEF","altPosition":"MID","photo":"avatars/player13.jpg"},
 {"number":14,"name":"Player Fourteen","position":"MID","altPosition":"FWD","photo":"avatars/player14.jpg"}
 ]
-</script>
+  </script>
 
     <script>
-        if ("serviceWorker" in navigator && location.protocol.startsWith("http")) { navigator.serviceWorker.register("service-worker.js") }
+        if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+            navigator.serviceWorker.register("service-worker.js");
+        }
     </script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="script.js" defer></script>
