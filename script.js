@@ -29,6 +29,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const eventLogEl = document.getElementById("eventLog");
   const exportCSVBtn = document.getElementById("exportCSV");
 
+  // NEW: Pass UI
+  const passSelect = document.getElementById("passTargetSelect");
+  const passBtn = document.getElementById("passBtn");
+
   const modal = document.getElementById("playerEditorModal");
   const openEditor = document.getElementById("openPlayerEditor");
 
@@ -64,8 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   function tick() {
-    timer++;
-    renderTimer();
+    timer++; renderTimer();
     if (currentHalf) {
       halfElapsed = Math.min(halfLengthSec(), halfElapsed + 1);
       renderRemaining();
@@ -78,19 +81,13 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch { }
       }
     }
-    getActivePlayerIds().forEach((id) => {
-      playSec[id] = (playSec[id] || 0) + 1;
-    });
+    getActivePlayerIds().forEach((id) => { playSec[id] = (playSec[id] || 0) + 1; });
     updatePlaytimeWidgets();
   }
 
   startBtn.addEventListener("click", () => { if (!interval) interval = setInterval(tick, 1000); });
   pauseBtn.addEventListener("click", () => { clearInterval(interval); interval = null; });
-  resetBtn.addEventListener("click", () => {
-    clearInterval(interval); interval = null;
-    timer = 0; halfElapsed = 0; currentHalf = 0;
-    renderTimer(); renderRemaining();
-  });
+  resetBtn.addEventListener("click", () => { clearInterval(interval); interval = null; timer = 0; halfElapsed = 0; currentHalf = 0; renderTimer(); renderRemaining(); });
   startFirstHalfBtn.addEventListener("click", () => { currentHalf = 1; halfElapsed = 0; renderRemaining(); });
   startSecondHalfBtn.addEventListener("click", () => { currentHalf = 2; halfElapsed = 0; renderRemaining(); });
 
@@ -99,26 +96,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveMatches = (m) => localStorage.setItem("matches", JSON.stringify(m));
   const uid = () => {
     const d = new Date();
-    return `${d.toISOString().slice(0, 10)}_${String(d.getHours()).padStart(2, "0")}${String(
-      d.getMinutes()
-    ).padStart(2, "0")}${String(d.getSeconds()).padStart(2, "0")}`;
+    return `${d.toISOString().slice(0, 10)}_${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}${String(d.getSeconds()).padStart(2, "0")}`;
   };
   let matches = loadMatches();
   let currentMatchId = null;
   const matchById = (id) => matches.find((m) => m.id === id) || null;
   const isMatchActive = () => !!currentMatchId;
+
   function setUIEnabled(enabled) {
     const disableClass = "disabled-ui";
     field.classList.toggle(disableClass, !enabled);
     document.querySelectorAll("#teamLineUpList .player-card, #saveFormation, #loadFormation, #saveFormationToMatch, #putStartersOnPitch").forEach(el => {
       el.classList.toggle(disableClass, !enabled);
     });
-    [startBtn, pauseBtn, resetBtn, startFirstHalfBtn, startSecondHalfBtn, halfLengthInput].forEach(el => {
-      el.disabled = !enabled;
+    [startBtn, pauseBtn, resetBtn, startFirstHalfBtn, startSecondHalfBtn, halfLengthInput, passSelect, passBtn].forEach(el => {
+      if (el) el.disabled = !enabled;
     });
-    eventForm.querySelectorAll("select, button").forEach(el => {
-      el.disabled = !enabled;
-    });
+    eventForm.querySelectorAll("select, button").forEach(el => { el.disabled = !enabled; });
   }
 
   const style = document.createElement("style");
@@ -156,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateAvailabilityUI();
   }
 
-  // --- FOOTBALL (draggable + snap + stick) ----------------------------------
+  // --- FOOTBALL (draggable + snap + stick + pass) ---------------------------
   const football = document.createElement("img");
   football.src = "football-png-32.png";
   football.alt = "Football";
@@ -169,10 +163,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   placeFootballAtCenter();
 
-  // track which player currently has the ball
-  let ballHolder = null;
+  let ballHolder = null;          // element: current holder on pitch
+  let isBallAnimating = false;    // prevent re-entrant passes
 
-  // position ball relative to a given player marker
   function positionBallOnPlayer(playerEl) {
     if (!playerEl) return;
     const pr = playerEl.getBoundingClientRect();
@@ -183,7 +176,6 @@ document.addEventListener("DOMContentLoaded", () => {
     football.style.top = `${top}px`;
   }
 
-  // helper: distance between element centers
   function centerDistance(elA, elB) {
     const a = elA.getBoundingClientRect();
     const b = elB.getBoundingClientRect();
@@ -192,7 +184,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return Math.hypot(ax - bx, ay - by);
   }
 
-  // stick the ball to nearest player if within radius
   function snapToNearestPlayer() {
     const playersOnPitch = [...field.querySelectorAll(".draggable-player")];
     if (!playersOnPitch.length) { ballHolder = null; return; }
@@ -205,19 +196,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (nearest && best <= SNAP_RADIUS) {
       ballHolder = nearest;
       positionBallOnPlayer(nearest);
+      refreshPassTargetDropdown();
+    } else {
+      ballHolder = null;
+      refreshPassTargetDropdown();
     }
   }
 
-  // observe style changes on pitch so ball follows holder during drags/subs
   const mo = new MutationObserver(() => {
-    if (ballHolder && field.contains(ballHolder)) positionBallOnPlayer(ballHolder);
+    if (!isBallAnimating && ballHolder && field.contains(ballHolder)) positionBallOnPlayer(ballHolder);
   });
   mo.observe(field, { attributes: true, childList: true, subtree: true });
 
-  // make the ball draggable; release from holder on grab
   (function makeFootballDraggable() {
     let offsetX = 0, offsetY = 0;
-
     function moveTo(clientX, clientY) {
       const rect = field.getBoundingClientRect();
       let x = clientX - rect.left - offsetX;
@@ -227,14 +219,13 @@ document.addEventListener("DOMContentLoaded", () => {
       football.style.left = `${x}px`;
       football.style.top = `${y}px`;
     }
-
-    // mouse
     football.addEventListener("mousedown", (e) => {
+      if (isBallAnimating) return;
       e.preventDefault();
       ballHolder = null; // release
+      refreshPassTargetDropdown();
       const r = football.getBoundingClientRect();
-      offsetX = e.clientX - r.left;
-      offsetY = e.clientY - r.top;
+      offsetX = e.clientX - r.left; offsetY = e.clientY - r.top;
       football.style.cursor = "grabbing";
       document.addEventListener("mousemove", onMove);
       document.addEventListener("mouseup", onUp);
@@ -246,74 +237,61 @@ document.addEventListener("DOMContentLoaded", () => {
       document.removeEventListener("mouseup", onUp);
       snapToNearestPlayer();
     }
-
-    // touch
     football.addEventListener("touchstart", (e) => {
-      ballHolder = null; // release
-      const t = e.touches[0];
-      const r = football.getBoundingClientRect();
-      offsetX = t.clientX - r.left;
-      offsetY = t.clientY - r.top;
+      if (isBallAnimating) return;
+      ballHolder = null; refreshPassTargetDropdown();
+      const t = e.touches[0], r = football.getBoundingClientRect();
+      offsetX = t.clientX - r.left; offsetY = t.clientY - r.top;
     }, { passive: true });
     football.addEventListener("touchmove", (e) => {
-      const t = e.touches[0];
-      if (t) moveTo(t.clientX, t.clientY);
+      const t = e.touches[0]; if (t) moveTo(t.clientX, t.clientY);
     }, { passive: true });
     football.addEventListener("touchend", () => snapToNearestPlayer());
   })();
-  // -------------------------------------------------------------------------
 
-  function createNewMatch() {
-    const id = uid();
-    const date = new Date().toISOString().slice(0, 10);
-    const title = prompt("Optional match title") || "";
-    const formation = takeFormationSnapshot();
-    matches.push({ id, date, title, events: [], formation });
-    saveMatches(matches);
-    currentMatchId = id;
+  // PASS ANIMATION
+  function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
 
-    lastRemovedPlayer = null;
-    timer = 0; halfElapsed = 0; currentHalf = 0;
-    renderTimer(); renderRemaining();
+  function animatePassToPlayer(targetEl, duration = 650) {
+    if (!targetEl || isBallAnimating) return;
+    isBallAnimating = true;
+    football.classList.add("ball-animating");
+    ballHolder = null; // free during animation
+    refreshPassTargetDropdown();
 
-    playSec = new Array(players.length).fill(0);
+    const fr = field.getBoundingClientRect();
+    const startRect = football.getBoundingClientRect();
+    const startX = startRect.left - fr.left + football.offsetWidth / 2;
+    const startY = startRect.top - fr.top + football.offsetHeight / 2;
 
-    // kickoff ball
-    placeFootballAtCenter();
+    let startTs = null;
+    function step(ts) {
+      if (startTs === null) startTs = ts;
+      const t = Math.min(1, (ts - startTs) / duration);
+      const tr = targetEl.getBoundingClientRect();
+      const targetX = tr.left - fr.left + tr.width / 2;
+      const targetY = tr.top - fr.top + tr.height - 4 + football.offsetHeight / 2;
 
-    renderMatchOptions();
-    renderEventLog();
-    alert("✅ New match started.");
-  }
+      const p = easeInOutQuad(t);
+      const curX = startX + (targetX - startX) * p;
+      const curY = startY + (targetY - startY) * p;
 
-  function deleteCurrentMatch() {
-    if (!currentMatchId) return alert("No match selected.");
-    const m = matchById(currentMatchId);
-    if (!m) return alert("Match not found.");
-    if (!confirm(`Delete match "${m.title || m.id}"?`)) return;
-    matches = matches.filter((mm) => mm.id !== currentMatchId);
-    saveMatches(matches);
-    currentMatchId = null;
-    lastRemovedPlayer = null;
-    renderMatchOptions();
-    eventLogEl.innerHTML = "";
-    alert("🗑️ Match deleted.");
-  }
+      football.style.left = `${curX - football.offsetWidth / 2}px`;
+      football.style.top = `${curY - football.offsetHeight / 2}px`;
 
-  function setActiveMatch(id, { loadFormation: lf = true } = {}) {
-    currentMatchId = id;
-    lastRemovedPlayer = null;
-    renderEventLog();
-    if (lf) {
-      const m = matchById(id);
-      if (m?.formation) loadFormationSnapshot(m.formation);
+      if (t < 1) requestAnimationFrame(step);
+      else {
+        isBallAnimating = false;
+        football.classList.remove("ball-animating");
+        ballHolder = targetEl;
+        positionBallOnPlayer(targetEl);
+        refreshPassTargetDropdown();
+      }
     }
-    playSec = new Array(players.length).fill(0);
-    timer = 0; halfElapsed = 0; currentHalf = 0;
-    renderTimer(); renderRemaining();
-    updateAvailabilityUI();
+    requestAnimationFrame(step);
   }
 
+  // --- Player lists & lineup logic -----------------------------------------
   function updatePutButton() {
     if (!putStartersBtn) return;
     const starters = starterList?.querySelectorAll(".player-card").length || 0;
@@ -397,26 +375,44 @@ document.addEventListener("DOMContentLoaded", () => {
       card.remove();
       setLineupUsed(pid, false);
       getStartersCount();
+      refreshPassTargetDropdown();
     });
     return card;
   }
 
+  // --- FIXED loader: only trust non-empty customPlayers; otherwise fall back ---
   async function loadPlayersData() {
+    // 1) customPlayers (only if non-empty array)
     try {
-      const custom = localStorage.getItem("customPlayers");
-      if (custom) return JSON.parse(custom);
+      const customRaw = localStorage.getItem("customPlayers");
+      if (customRaw) {
+        const custom = JSON.parse(customRaw);
+        if (Array.isArray(custom) && custom.length > 0) return custom;
+      }
     } catch { }
-    const inline = document.getElementById("playersData");
-    if (inline) {
-      try { return JSON.parse(inline.textContent.trim()); } catch { }
-    }
+    // 2) inline defaults
     try {
-      const res = await fetch("players.json?v=3");
-      if (!res.ok) throw new Error();
-      return await res.json();
-    } catch {
-      return [];
-    }
+      const inline = document.getElementById("playersData");
+      if (inline) {
+        const arr = JSON.parse(inline.textContent.trim());
+        if (Array.isArray(arr) && arr.length > 0) return arr;
+      }
+    } catch { }
+    // 3) players.json (no-cache)
+    try {
+      const res = await fetch("players.json?v=4", { cache: "no-store" });
+      if (res.ok) {
+        const arr = await res.json();
+        if (Array.isArray(arr) && arr.length > 0) return arr;
+      }
+    } catch { }
+    // 4) tiny fallback so UI never blanks
+    return [
+      { number: 1, name: "Player One", position: "GK", altPosition: "DEF", photo: "avatars/placeholder.jpg" },
+      { number: 2, name: "Player Two", position: "DEF", altPosition: "MID", photo: "avatars/placeholder.jpg" },
+      { number: 3, name: "Player Three", position: "MID", altPosition: "FWD", photo: "avatars/placeholder.jpg" },
+      { number: 4, name: "Player Four", position: "FWD", altPosition: "MID", photo: "avatars/placeholder.jpg" }
+    ];
   }
 
   loadPlayersData().then((data) => {
@@ -433,6 +429,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderMatchOptions();
     getStartersCount();
     updatePlaytimeWidgets();
+    refreshPassTargetDropdown();
   });
 
   const getActivePlayerIds = () =>
@@ -442,8 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function fillPlayerSelect(selectEl, excludeId = null) {
     if (!selectEl) return;
-    selectEl.innerHTML = `<option value="" ${selectEl === assistPlayerEl ? "" : "disabled"
-      } selected>${selectEl === assistPlayerEl ? "— Select Assist Player (optional) —" : "— Select Player —"}</option>`;
+    selectEl.innerHTML = `<option value="" ${selectEl === assistPlayerEl ? "" : "disabled"} selected>${selectEl === assistPlayerEl ? "— Select Assist Player (optional) —" : "— Select Player —"}</option>`;
     const activeIds = getActivePlayerIds();
     activeIds.forEach((id) => {
       if (excludeId !== null && String(id) === String(excludeId)) return;
@@ -464,15 +460,30 @@ document.addEventListener("DOMContentLoaded", () => {
       assistPlayerEl.value = "";
     }
   }
-  eventTypeEl.addEventListener("change", refreshEventPlayerDropdown);
+
+  // NEW: Pass target dropdown
+  function refreshPassTargetDropdown() {
+    if (!passSelect) return;
+    const holderId = ballHolder ? String(ballHolder.dataset.playerId) : null;
+    passSelect.innerHTML = `<option value="" ${getActivePlayerIds().length ? "" : "disabled"} selected>— Active player —</option>`;
+    getActivePlayerIds().forEach((id) => {
+      const p = players[id]; if (!p) return;
+      if (holderId !== null && String(id) === holderId) return; // can't pass to self
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = `#${p.number} ${p.name}`;
+      passSelect.appendChild(opt);
+    });
+    passBtn.disabled = !getActivePlayerIds().length || isBallAnimating;
+  }
+
+  eventTypeEl.addEventListener("change", () => { refreshEventPlayerDropdown(); });
   eventPlayerEl.addEventListener("change", () => {
-    if (eventTypeEl.value === "Goal")
-      fillPlayerSelect(assistPlayerEl, eventPlayerEl.value || null);
+    if (eventTypeEl.value === "Goal") fillPlayerSelect(assistPlayerEl, eventPlayerEl.value || null);
   });
 
   function getTemplatePercents(name = "3-3-2") {
-    const lanesY = (n) =>
-      n === 1 ? [50] : n === 2 ? [35, 65] : n === 3 ? [25, 50, 75] : [18, 41, 59, 82];
+    const lanesY = (n) => n === 1 ? [50] : n === 2 ? [35, 65] : n === 3 ? [25, 50, 75] : [18, 41, 59, 82];
     switch (name) {
       case "3-2-3":
         return [{ x: 6, y: 50 }, ...lanesY(3).map((y) => ({ x: 22, y })), ...lanesY(2).map((y) => ({ x: 45, y })), ...lanesY(3).map((y) => ({ x: 70, y }))];
@@ -492,8 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     placementIndex = 0;
     lastRemovedPlayer = null;
-    // if the holder left the pitch, release the ball
-    if (ballHolder && !field.contains(ballHolder)) { ballHolder = null; }
+    if (ballHolder && !field.contains(ballHolder)) { ballHolder = null; refreshPassTargetDropdown(); }
     refreshEventPlayerDropdown();
   }
 
@@ -514,6 +524,7 @@ document.addEventListener("DOMContentLoaded", () => {
       addPlayerToField(id, p, `${(x / 100) * W}px`, `${(y / 100) * H}px`);
     });
     refreshEventPlayerDropdown();
+    refreshPassTargetDropdown();
   }
   putStartersBtn?.addEventListener("click", autoPlaceStarters);
 
@@ -540,13 +551,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const incomingId = parseInt(e.dataTransfer.getData("text/plain"));
       if (Number.isNaN(incomingId)) return;
       const benchCard = benchList.querySelector(`.player-card[data-player-id="${incomingId}"]`);
-      if (!benchCard) {
-        alert("Only Game Changers can come on. All Players are not available today.");
-        return;
-      }
-      if (field.querySelector(`.draggable-player[data-player-id="${incomingId}"]`)) {
-        return alert("That player is already on the pitch.");
-      }
+      if (!benchCard) { alert("Only Game Changers can come on. All Players are not available today."); return; }
+      if (field.querySelector(`.draggable-player[data-player-id="${incomingId}"]`)) { return alert("That player is already on the pitch."); }
       const targetId = parseInt(div.dataset.playerId);
       const incoming = players[incomingId], outgoing = players[targetId];
       if (!incoming || !outgoing) return;
@@ -573,6 +579,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
       refreshEventPlayerDropdown();
+      refreshPassTargetDropdown();
     });
   }
 
@@ -597,7 +604,7 @@ document.addEventListener("DOMContentLoaded", () => {
     div.style.position = "absolute";
     div.innerHTML = playerOnPitchHTML(player);
 
-    // remove from pitch
+    // remove from pitch (double click or double tap)
     let tapTs = 0;
     div.addEventListener("dblclick", () => removeFromPitch(div));
     div.addEventListener("touchend", () => {
@@ -611,13 +618,13 @@ document.addEventListener("DOMContentLoaded", () => {
     field.appendChild(div);
     updatePlayerCardState(index, true);
     refreshEventPlayerDropdown();
+    refreshPassTargetDropdown();
   }
 
   function removeFromPitch(div) {
     const removedId = parseInt(div.dataset.playerId);
     const removedPlayer = players[removedId];
-    // if this player had the ball, release it in place
-    if (ballHolder === div) ballHolder = null;
+    if (ballHolder === div) ballHolder = null; // release ball
     div.remove();
     updatePlayerCardState(removedId, false);
     if (currentMatchId && removedPlayer) {
@@ -628,6 +635,7 @@ document.addEventListener("DOMContentLoaded", () => {
       };
     }
     refreshEventPlayerDropdown();
+    refreshPassTargetDropdown();
   }
 
   function updatePlayerCardState(playerId, active) {
@@ -688,6 +696,7 @@ document.addEventListener("DOMContentLoaded", () => {
       y = Math.max(0, Math.min(y, field.clientHeight - el.offsetHeight));
       el.style.left = `${x}px`;
       el.style.top = `${y}px`;
+      if (!isBallAnimating && ballHolder === el) positionBallOnPlayer(el);
     }
 
     el.style.cursor = "move";
@@ -702,6 +711,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = localStorage.getItem("savedFormation");
     if (!data) return alert("⚠️ No saved formation.");
     loadFormationSnapshot(JSON.parse(data));
+    refreshPassTargetDropdown();
   });
   saveFormationToMatchBtn.addEventListener("click", () => {
     if (!currentMatchId) return alert("Select or create a match first.");
@@ -731,6 +741,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (player) addPlayerToField(pos.id, player, pos.left, pos.top);
     });
     refreshEventPlayerDropdown();
+    refreshPassTargetDropdown();
   }
 
   // Events
@@ -777,10 +788,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (aid !== null && !Number.isNaN(aid)) {
         if (aid === pid) return alert("Scorer and assist cannot be the same player.");
         const a = players[aid];
-        if (a) {
-          ev.assistId = aid;
-          ev.assistName = `#${a.number} ${a.name}`;
-        }
+        if (a) { ev.assistId = aid; ev.assistName = `#${a.number} ${a.name}`; }
       }
     }
     match.events.push(ev);
@@ -844,12 +852,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // NEW: Pass button handler
+  passBtn?.addEventListener("click", () => {
+    const pid = parseInt(passSelect?.value || "");
+    if (Number.isNaN(pid)) return alert("Choose a target player first.");
+    const targetEl = field.querySelector(`.draggable-player[data-player-id="${pid}"]`);
+    if (!targetEl) return alert("That player is not on the pitch.");
+    animatePassToPlayer(targetEl, 650);
+  });
+
+  // Modal open/close
   openEditor.addEventListener("click", () => modal.classList.remove("hidden"));
   modal.addEventListener("click", (e) => {
     if (e.target.classList.contains("pe-backdrop")) modal.classList.add("hidden");
   });
   window.__closePlayerEditor = () => modal.classList.add("hidden");
 
+  // Hooks for the player editor
   window.loadPlayersData = loadPlayersData;
   window.refreshPlayersUI = function (newPlayers) {
     players = newPlayers || players;
@@ -858,10 +877,13 @@ document.addEventListener("DOMContentLoaded", () => {
     playSec = new Array(players.length).fill(0);
     updatePlaytimeWidgets();
     refreshEventPlayerDropdown();
+    refreshPassTargetDropdown();
   };
 
+  // Initial draw
   renderTimer();
   renderRemaining();
+  refreshPassTargetDropdown();
 });
 
 
@@ -901,6 +923,7 @@ async function importAll(file) {
   else location.reload();
 }
 
+// Bind export/import once DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('exportBtn')?.addEventListener('click', exportAll);
   document.getElementById('importInput')?.addEventListener('change', async (e) => {

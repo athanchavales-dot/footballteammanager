@@ -1,7 +1,7 @@
 // service-worker.js — auto-updating strategy (no manual version bumps needed)
 
 const PRECACHE = "bnfc-shell-v1";
-const RUNTIME  = "bnfc-runtime-v1";
+const RUNTIME = "bnfc-runtime-v1";
 
 const SHELL_ASSETS = [
   "./",
