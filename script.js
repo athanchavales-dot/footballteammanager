@@ -69,16 +69,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (currentHalf) {
       halfElapsed = Math.min(halfLengthSec(), halfElapsed + 1);
       renderRemaining();
-      // Auto stop at end of half
-      if (halfElapsed >= halfLengthSec()) { clearInterval(interval); interval = null;
-  try { if (navigator.vibrate) navigator.vibrate([180, 90, 180]); } catch {}
-  try {
-    const audio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAACAgICAgICAg');
-    audio.play().catch(()=>{});
-  } catch {}
- }
+      if (halfElapsed >= halfLengthSec()) {
+        clearInterval(interval); interval = null;
+        try { if (navigator.vibrate) navigator.vibrate([180, 90, 180]); } catch { }
+        try {
+          const audio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAACAgICAgICAg');
+          audio.play().catch(() => { });
+        } catch { }
+      }
     }
-    // credit seconds to active players
     getActivePlayerIds().forEach((id) => {
       playSec[id] = (playSec[id] || 0) + 1;
     });
@@ -110,40 +109,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const isMatchActive = () => !!currentMatchId;
   function setUIEnabled(enabled) {
     const disableClass = "disabled-ui";
-
-    // Pitch & Formation
     field.classList.toggle(disableClass, !enabled);
-
-    // Player Manager buttons and cards
     document.querySelectorAll("#teamLineUpList .player-card, #saveFormation, #loadFormation, #saveFormationToMatch, #putStartersOnPitch").forEach(el => {
       el.classList.toggle(disableClass, !enabled);
     });
-
-    // Timer controls
     [startBtn, pauseBtn, resetBtn, startFirstHalfBtn, startSecondHalfBtn, halfLengthInput].forEach(el => {
       el.disabled = !enabled;
     });
-
-    // Match Events form
     eventForm.querySelectorAll("select, button").forEach(el => {
       el.disabled = !enabled;
     });
   }
 
-  // CSS to make disabled look obvious & block clicks
   const style = document.createElement("style");
-  style.textContent = `
-  .disabled-ui {
-    pointer-events: none !important;
-    opacity: 0.4;
-  }
-`;
+  style.textContent = `.disabled-ui{pointer-events:none!important;opacity:.4}`;
   document.head.appendChild(style);
 
-  // Initially lock everything until match is active
   setUIEnabled(false);
 
-  // Then update it whenever match changes
   const originalSetActiveMatch = setActiveMatch;
   setActiveMatch = function (id, opts) {
     originalSetActiveMatch.call(this, id, opts);
@@ -163,18 +146,122 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderMatchOptions() {
     matchSelect.innerHTML = `<option value="" disabled ${currentMatchId ? "" : "selected"}>— Select a match —</option>`;
-    matches
-      .slice()
-      .sort((a, b) => (a.date < b.date ? 1 : -1))
-      .forEach((m) => {
-        const opt = document.createElement("option");
-        opt.value = m.id;
-        opt.textContent = `${m.date} • ${m.title || m.id}`;
-        matchSelect.appendChild(opt);
-      });
+    matches.slice().sort((a, b) => (a.date < b.date ? 1 : -1)).forEach((m) => {
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = `${m.date} • ${m.title || m.id}`;
+      matchSelect.appendChild(opt);
+    });
     if (currentMatchId && matchById(currentMatchId)) matchSelect.value = currentMatchId;
     updateAvailabilityUI();
   }
+
+  // --- FOOTBALL (draggable + snap + stick) ----------------------------------
+  const football = document.createElement("img");
+  football.src = "football-png-32.png";
+  football.alt = "Football";
+  football.className = "football-icon";
+  field.appendChild(football);
+
+  function placeFootballAtCenter() {
+    football.style.left = `${(field.clientWidth / 2) - 16}px`;
+    football.style.top = `${(field.clientHeight / 2) - 16}px`;
+  }
+  placeFootballAtCenter();
+
+  // track which player currently has the ball
+  let ballHolder = null;
+
+  // position ball relative to a given player marker
+  function positionBallOnPlayer(playerEl) {
+    if (!playerEl) return;
+    const pr = playerEl.getBoundingClientRect();
+    const fr = field.getBoundingClientRect();
+    const left = pr.left - fr.left + pr.width / 2 - football.offsetWidth / 2;
+    const top = pr.top - fr.top + pr.height - 4;
+    football.style.left = `${left}px`;
+    football.style.top = `${top}px`;
+  }
+
+  // helper: distance between element centers
+  function centerDistance(elA, elB) {
+    const a = elA.getBoundingClientRect();
+    const b = elB.getBoundingClientRect();
+    const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+    const bx = b.left + b.width / 2, by = b.top + b.height / 2;
+    return Math.hypot(ax - bx, ay - by);
+  }
+
+  // stick the ball to nearest player if within radius
+  function snapToNearestPlayer() {
+    const playersOnPitch = [...field.querySelectorAll(".draggable-player")];
+    if (!playersOnPitch.length) { ballHolder = null; return; }
+    const SNAP_RADIUS = 50;
+    let nearest = null, best = Infinity;
+    for (const p of playersOnPitch) {
+      const d = centerDistance(football, p);
+      if (d < best) { best = d; nearest = p; }
+    }
+    if (nearest && best <= SNAP_RADIUS) {
+      ballHolder = nearest;
+      positionBallOnPlayer(nearest);
+    }
+  }
+
+  // observe style changes on pitch so ball follows holder during drags/subs
+  const mo = new MutationObserver(() => {
+    if (ballHolder && field.contains(ballHolder)) positionBallOnPlayer(ballHolder);
+  });
+  mo.observe(field, { attributes: true, childList: true, subtree: true });
+
+  // make the ball draggable; release from holder on grab
+  (function makeFootballDraggable() {
+    let offsetX = 0, offsetY = 0;
+
+    function moveTo(clientX, clientY) {
+      const rect = field.getBoundingClientRect();
+      let x = clientX - rect.left - offsetX;
+      let y = clientY - rect.top - offsetY;
+      x = Math.max(0, Math.min(x, field.clientWidth - football.offsetWidth));
+      y = Math.max(0, Math.min(y, field.clientHeight - football.offsetHeight));
+      football.style.left = `${x}px`;
+      football.style.top = `${y}px`;
+    }
+
+    // mouse
+    football.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      ballHolder = null; // release
+      const r = football.getBoundingClientRect();
+      offsetX = e.clientX - r.left;
+      offsetY = e.clientY - r.top;
+      football.style.cursor = "grabbing";
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+    function onMove(e) { moveTo(e.clientX, e.clientY); }
+    function onUp() {
+      football.style.cursor = "grab";
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      snapToNearestPlayer();
+    }
+
+    // touch
+    football.addEventListener("touchstart", (e) => {
+      ballHolder = null; // release
+      const t = e.touches[0];
+      const r = football.getBoundingClientRect();
+      offsetX = t.clientX - r.left;
+      offsetY = t.clientY - r.top;
+    }, { passive: true });
+    football.addEventListener("touchmove", (e) => {
+      const t = e.touches[0];
+      if (t) moveTo(t.clientX, t.clientY);
+    }, { passive: true });
+    football.addEventListener("touchend", () => snapToNearestPlayer());
+  })();
+  // -------------------------------------------------------------------------
 
   function createNewMatch() {
     const id = uid();
@@ -190,6 +277,9 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTimer(); renderRemaining();
 
     playSec = new Array(players.length).fill(0);
+
+    // kickoff ball
+    placeFootballAtCenter();
 
     renderMatchOptions();
     renderEventLog();
@@ -311,7 +401,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return card;
   }
 
-  // LOAD PLAYERS: prefer customPlayers in localStorage (from editor), then inline, then JSON
   async function loadPlayersData() {
     try {
       const custom = localStorage.getItem("customPlayers");
@@ -403,6 +492,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     placementIndex = 0;
     lastRemovedPlayer = null;
+    // if the holder left the pitch, release the ball
+    if (ballHolder && !field.contains(ballHolder)) { ballHolder = null; }
     refreshEventPlayerDropdown();
   }
 
@@ -416,10 +507,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const ids = starterCards.map((c) => parseInt(c.dataset.playerId));
     const gkIndex = ids.findIndex((id) => players[id]?.position === "GK");
-    if (gkIndex > 0) {
-      const [gk] = ids.splice(gkIndex, 1);
-      ids.unshift(gk);
-    }
+    if (gkIndex > 0) { const [gk] = ids.splice(gkIndex, 1); ids.unshift(gk); }
     ids.slice(0, template.length).forEach((id, i) => {
       const p = players[id];
       const { x, y } = template[i];
@@ -451,9 +539,7 @@ document.addEventListener("DOMContentLoaded", () => {
       div.classList.remove("drop-target");
       const incomingId = parseInt(e.dataTransfer.getData("text/plain"));
       if (Number.isNaN(incomingId)) return;
-      const benchCard = benchList.querySelector(
-        `.player-card[data-player-id="${incomingId}"]`
-      );
+      const benchCard = benchList.querySelector(`.player-card[data-player-id="${incomingId}"]`);
       if (!benchCard) {
         alert("Only Game Changers can come on. All Players are not available today.");
         return;
@@ -499,10 +585,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function addPlayerToField(index, player, left = null, top = null) {
-    if (
-      field.querySelectorAll(".draggable-player").length >= 9 &&
-      !field.querySelector(`.draggable-player[data-player-id="${index}"]`)
-    ) {
+    if (field.querySelectorAll(".draggable-player").length >= 9 &&
+      !field.querySelector(`.draggable-player[data-player-id="${index}"]`)) {
       return alert("⚠️ Only 9 players allowed.");
     }
     const div = document.createElement("div");
@@ -513,7 +597,7 @@ document.addEventListener("DOMContentLoaded", () => {
     div.style.position = "absolute";
     div.innerHTML = playerOnPitchHTML(player);
 
-    // remove from pitch (double click or double tap)
+    // remove from pitch
     let tapTs = 0;
     div.addEventListener("dblclick", () => removeFromPitch(div));
     div.addEventListener("touchend", () => {
@@ -526,27 +610,14 @@ document.addEventListener("DOMContentLoaded", () => {
     attachDropHandlers(div);
     field.appendChild(div);
     updatePlayerCardState(index, true);
-
-    if (lastRemovedPlayer && currentMatchId) {
-      const m = matchById(currentMatchId);
-      if (m) {
-        m.events.push({
-          time: timerEl.textContent,
-          type: "Substitution",
-          playerId: index,
-          playerName: `#${player.number} ${player.name} ⇆ ${lastRemovedPlayer.name}`,
-        });
-        saveMatches(matches);
-        renderEventLog();
-      }
-      lastRemovedPlayer = null;
-    }
     refreshEventPlayerDropdown();
   }
 
   function removeFromPitch(div) {
     const removedId = parseInt(div.dataset.playerId);
     const removedPlayer = players[removedId];
+    // if this player had the ball, release it in place
+    if (ballHolder === div) ballHolder = null;
     div.remove();
     updatePlayerCardState(removedId, false);
     if (currentMatchId && removedPlayer) {
@@ -773,14 +844,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Modal open/close
   openEditor.addEventListener("click", () => modal.classList.remove("hidden"));
   modal.addEventListener("click", (e) => {
     if (e.target.classList.contains("pe-backdrop")) modal.classList.add("hidden");
   });
   window.__closePlayerEditor = () => modal.classList.add("hidden");
 
-  // Hooks for the player editor
   window.loadPlayersData = loadPlayersData;
   window.refreshPlayersUI = function (newPlayers) {
     players = newPlayers || players;
@@ -791,26 +860,25 @@ document.addEventListener("DOMContentLoaded", () => {
     refreshEventPlayerDropdown();
   };
 
-  // Initial draw
   renderTimer();
   renderRemaining();
 });
 
 
 // --- Data backup helpers ---
-function loadLS(key, fallback=null){
+function loadLS(key, fallback = null) {
   try { return JSON.parse(localStorage.getItem(key) ?? 'null') ?? fallback; }
   catch { return fallback; }
 }
-function saveLS(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+function saveLS(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
-function exportAll(){
+function exportAll() {
   const payload = {
     matches: loadLS('matches', []),
     players: loadLS('customPlayers', null),
     formation: loadLS('savedFormation', null),
   };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'team-manager-backup.json';
@@ -820,7 +888,7 @@ function exportAll(){
   a.remove();
 }
 
-async function importAll(file){
+async function importAll(file) {
   const text = await file.text();
   const data = JSON.parse(text);
   if (!data || typeof data !== 'object') throw new Error('Invalid backup');
@@ -833,19 +901,18 @@ async function importAll(file){
   else location.reload();
 }
 
-// Bind export/import once DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('exportBtn')?.addEventListener('click', exportAll);
-  document.getElementById('importInput')?.addEventListener('change', async (e)=>{
+  document.getElementById('importInput')?.addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    try{
+    try {
       await importAll(file);
       alert('Import complete.');
-    }catch(err){
+    } catch (err) {
       console.error(err);
       alert('Import failed: ' + err.message);
-    }finally{
+    } finally {
       e.target.value = '';
     }
   });
