@@ -1,6 +1,6 @@
-// service-worker.js — auto-updating strategy (no manual version bumps needed)
+// service-worker.js — cache bump to ensure the updated HTML (no Pass UI) is served
 
-const PRECACHE = "bnfc-shell-v1";
+const PRECACHE = "bnfc-shell-v2";   // ⬅️ bumped
 const RUNTIME = "bnfc-runtime-v1";
 
 const SHELL_ASSETS = [

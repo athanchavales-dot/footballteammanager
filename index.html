@@ -69,13 +69,7 @@
                         <option value="2-3-3">2–3–3</option>
                         <option value="4-3-1">4–3–1</option>
                     </select>
-
-                    <!-- Pass controls (this is the bit you were missing) -->
-                    <span class="text-xs opacity-70 ml-2">Pass to</span>
-                    <select id="passTargetSelect" class="input min-w-[12rem]">
-                        <option value="" disabled selected>— Active player —</option>
-                    </select>
-                    <button id="passBtn" class="btn-amber">Pass</button>
+                    <!-- Pass controls removed on purpose -->
                 </div>
             </div>
 
@@ -134,6 +128,7 @@
         </div>
     </div>
 
+    <!-- Built-in default players (used if no custom players are saved) -->
     <script id="playersData" type="application/json">
 [
 {"number":1,"name":"Player One","position":"GK","altPosition":"DEF","photo":"avatars/player1.jpg"},
