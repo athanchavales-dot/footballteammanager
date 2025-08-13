@@ -8,6 +8,7 @@
   margin-inline: auto
 }
 
+/* Buttons / Inputs */
 .btn {
   background: #1f2937;
   color: #e5e7eb;
@@ -64,6 +65,7 @@
   padding: .38rem .55rem
 }
 
+/* Panels / Lists */
 .panel {
   background: #0b1220;
   border: 1px solid #1f2a44;
@@ -90,6 +92,7 @@
   border-radius: .35rem
 }
 
+/* Layout */
 .grid-dashboard {
   display: grid;
   grid-template-columns: var(--sidebar) minmax(48rem, 1fr) var(--right);
@@ -110,6 +113,7 @@
   }
 }
 
+/* Pitch */
 #formationField {
   background-image: url("Field.png");
   background-size: cover;
@@ -132,6 +136,7 @@
   outline-offset: 2px
 }
 
+/* Player manager cards */
 .player-card {
   background: #0f172a;
   border: 1px solid #1f2a44;
@@ -176,6 +181,7 @@
   padding-top: .5rem
 }
 
+/* Playtime bars */
 .pt-wrap {
   margin-top: .2rem
 }
@@ -211,6 +217,7 @@
   background: #10b981
 }
 
+/* Player Editor (compact row style) */
 .pe-modal {
   position: fixed;
   inset: 0;
@@ -242,27 +249,6 @@
   padding: 1rem
 }
 
-.pe-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: #0b1220;
-  border-bottom: 1px solid #1f2a44;
-  padding-bottom: .5rem;
-  margin-bottom: .75rem;
-}
-
-.pe-title {
-  font-weight: 700;
-  font-size: 1.05rem
-}
-
-.pe-actions {
-  display: flex;
-  gap: .5rem;
-  flex-wrap: wrap
-}
-
 .pe-btn {
   background: #111827;
   color: #fff;
@@ -271,42 +257,6 @@
   padding: .45rem .65rem;
   font-size: .85rem;
   border: 1px solid #334155
-}
-
-.pe-btn.green {
-  background: #10b981
-}
-
-.pe-btn.blue {
-  background: #2563eb
-}
-
-.pe-btn.red {
-  background: #ef4444
-}
-
-.pe-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 .5rem
-}
-
-.pe-row {
-  background: #0f172a;
-  border: 1px solid #1f2a44;
-  border-radius: .65rem;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, .18);
-}
-
-.pe-table th {
-  font-size: .72rem;
-  text-align: left;
-  padding: .25rem .5rem;
-  color: #cbd5e1
-}
-
-.pe-table td {
-  padding: .45rem
 }
 
 .pe-input {
@@ -319,166 +269,138 @@
   font-size: .85rem
 }
 
-.pe-mini {
-  display: flex;
-  gap: .25rem
+.pe-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 .5rem
 }
 
-.pe-link {
-  color: #60a5fa;
-  text-decoration: underline;
-  font-size: .8rem
-}
-
-/* Photo cell: avatar + interactive pill */
-.pe-photo {
-  display: flex;
+.pe-row {
+  display: grid;
+  grid-template-columns: 56px 1fr 90px 90px 160px minmax(180px, 1fr) 170px;
+  gap: .5rem;
   align-items: center;
-  gap: .6rem;
+  background: #0f172a;
+  border: 1px solid #1f2a44;
+  border-radius: .65rem;
+  padding: .5rem .6rem;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, .18)
 }
 
-.pe-thumb {
-  width: 36px;
-  height: 36px;
+.pe-row--head {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: #cbd5e1;
+  font-size: .8rem;
+  font-weight: 600;
+  padding: .25rem 0
+}
+
+.pe-photo {
+  width: 32px;
+  height: 32px;
   border-radius: 9999px;
   object-fit: cover;
-  border: 2px solid #1f2a44;
-  background: #0b1220;
+  border: 1px solid #334155
 }
 
 .pe-drop {
-  min-width: 150px;
-  text-align: center;
-  padding: .45rem .75rem;
-  border-radius: .65rem;
-  background: #0b1220;
+  display: inline-block;
+  padding: .25rem .5rem;
   border: 1px dashed #334155;
+  border-radius: .35rem;
+  font-size: .72rem;
   color: #cbd5e1;
-  font-size: .85rem;
   cursor: pointer;
-  user-select: none;
-  transition: border-color .15s ease, background .15s ease, transform .05s ease;
+  user-select: none
 }
 
-.pe-drop:hover {
-  border-color: #4b5563;
-  background: #0d1629;
+.pe-drop input {
+  display: none
 }
 
-.pe-drop--hover {
-  border-color: #60a5fa !important;
-  background: rgba(96, 165, 250, .08);
-  transform: scale(0.99);
-}
-
-/* Hide the real file input */
-.pe-file {
-  display: none;
-}
-
-/* Inputs in table look like the screenshot */
-.pe-table input.pe-input,
-.pe-table select.pe-input {
-  height: 36px;
-  padding: .35rem .55rem;
-}
-
-/* Keep column spacing tight like the shot */
-.pe-table th,
-.pe-table td {
-  vertical-align: middle;
-}
-
-/* --- Consistent card sizing for Starters and Game Changers --- */
+/* Starters & bench sizing */
 #starterList .player-card,
 #benchList .player-card {
   height: 160px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-between
 }
 
 #starterList .player-card img,
 #benchList .player-card img {
   width: 42px;
   height: 42px;
-  object-fit: cover;
+  object-fit: cover
 }
 
-/* --- Compact Starters layout to fit 9 in one row --- */
-#starterList .player-card {
-  flex: 0 0 95px;
-  height: 130px;
-  font-size: 0.85em;
-}
-
-#starterList .player-card img {
-  width: 36px;
-  height: 36px;
-  object-fit: cover;
-}
-
-/* --- Force Starters to 9 columns in a single row --- */
 #starterList {
   display: grid;
-  grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(9, minmax(0, 1fr)) !important
 }
 
-/* Compact the starter cards to suit 9-up layout */
 #starterList .player-card {
+  flex: 0 0 95px;
   height: 120px !important;
   padding: .35rem !important;
-  font-size: 0.85em;
+  font-size: .85em
 }
 
 #starterList .player-card img {
   width: 34px !important;
-  height: 34px !important;
+  height: 34px !important
 }
 
-/* --- Make text on pitch player cards black --- */
-.pitch-player-card {
-  color: #000 !important;
-}
-
-.pitch-player-card .player-name,
-.pitch-player-card .player-position {
-  color: #000 !important;
-}
-
-/* --- Force black text for on-pitch markers --- */
+/* Force black text on pitch markers */
+.pitch-player-card,
 .draggable-player,
 .draggable-player * {
-  color: #000 !important;
+  color: #000 !important
 }
 
 /* Mobile tweaks */
-@media (max-width: 640px) {
+@media (max-width:640px) {
   #starterList {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: .5rem;
+    gap: .5rem
   }
 
   .player-card,
   .lineup-card {
-    min-height: 56px;
+    min-height: 56px
   }
 
   #putStartersBtn {
     position: sticky;
     bottom: 0;
-    z-index: 5;
+    z-index: 5
   }
+
+  .pe-row {
+    display: grid;
+    grid-template-columns: 56px 1fr 90px 90px 160px 170px;
+    /* removed URL col */
+    gap: .5rem;
+    align-items: center;
+    background: #0f172a;
+    border: 1px solid #1f2a44;
+    border-radius: .65rem;
+    padding: .5rem .6rem;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, .18);
+  }
+
 }
 
-/* --- Football icon (draggable ball) --- */
+/* Football icon */
 .football-icon {
   position: absolute;
   width: 32px;
   height: 32px;
   z-index: 20;
   user-select: none;
-  cursor: grab;
+  cursor: grab
 }

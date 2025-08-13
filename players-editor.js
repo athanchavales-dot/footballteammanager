@@ -1,208 +1,197 @@
+(() => {
+  const POS = ["GK", "DEF", "MID", "FWD"];
 
-(function () {
-  const { createApp, ref, computed, onMounted } = Vue;
+  const modalEl = document.getElementById("playerEditorModal");
+  const mountEl = document.getElementById("playerEditorApp");
 
-  function defaultPlayer(n = 0) {
-    return { number: n, name: "New Player", position: "MID", altPosition: "FWD", photo: "avatars/placeholder.jpg" };
-  }
+  const tpl = `
+  <div class="p-3">
+    <div class="flex items-center gap-2 mb-3">
+      <input v-model="q" class="pe-input max-w-sm" placeholder="Search by name or number" />
+      <button class="pe-btn" @click="add()">Add</button>
+      <button class="pe-btn" @click="renumber()">Renumber</button>
+      <button class="pe-btn" @click="sortByNumber()">Sort #</button>
+      <button class="pe-btn" @click="sortByPosition()">Sort Pos</button>
+      <button class="pe-btn" @click="save()">Save</button>
+      <button class="pe-btn" @click="close()">Close</button>
+    </div>
 
-  // Resize to square dataURL (offline-friendly)
-  async function fileToDataURLSquare(file, size = 128) {
-    const url = URL.createObjectURL(file);
-    try {
-      const img = await new Promise((res, rej) => {
-        const i = new Image();
-        i.onload = () => res(i);
-        i.onerror = rej;
-        i.src = url;
-      });
-      const canvas = document.createElement("canvas");
-      canvas.width = size; canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      const r = Math.max(size / img.width, size / img.height);
-      const w = img.width * r, h = img.height * r;
-      const x = (size - w) / 2, y = (size - h) / 2;
-      ctx.drawImage(img, x, y, w, h);
-      return canvas.toDataURL("image/jpeg", 0.85);
-    } finally {
-      URL.revokeObjectURL(url);
-    }
-  }
-
-  createApp({
-    setup() {
-      const players = ref([]);
-      const filter = ref("");
-
-      const filtered = computed(() =>
-        players.value.filter(p =>
-          p.name.toLowerCase().includes(filter.value.toLowerCase()) ||
-          String(p.number).includes(filter.value)
-        )
-      );
-
-      async function load() {
-        let arr = [];
-        try {
-          const custom = localStorage.getItem("customPlayers");
-          if (custom) arr = JSON.parse(custom);
-          else if (window.loadPlayersData) arr = await window.loadPlayersData();
-        } catch {}
-        if (!Array.isArray(arr) || arr.length === 0) {
-          try {
-            const res = await fetch("players.json");
-            if (res.ok) arr = await res.json();
-          } catch { arr = [defaultPlayer(1)]; }
-        }
-        players.value = JSON.parse(JSON.stringify(arr));
-      }
-
-      function add() {
-        const nextNo = (players.value.reduce((m, p) => Math.max(m, Number(p.number) || 0), 0) || 0) + 1;
-        players.value.push(defaultPlayer(nextNo));
-      }
-      function duplicate(idx) {
-        const p = players.value[idx]; if (!p) return;
-        const copy = JSON.parse(JSON.stringify(p));
-        copy.number = (players.value.reduce((m, q) => Math.max(m, Number(q.number) || 0), 0) || 0) + 1;
-        copy.name = p.name + " (Copy)";
-        players.value.splice(idx + 1, 0, copy);
-      }
-      function remove(idx) {
-        if (!confirm("Remove this player?")) return;
-        players.value.splice(idx, 1);
-      }
-      function renumber() {
-        const used = new Set();
-        players.value.forEach((p) => {
-          let n = Number(p.number) || 0;
-          while (n <= 0 || used.has(n)) n++;
-          used.add(n);
-          p.number = n;
-        });
-      }
-      function sortByNumber() { players.value.sort((a, b) => (a.number || 0) - (b.number || 0)); }
-      function sortByPosition() {
-        const order = { GK: 0, DEF: 1, MID: 2, FWD: 3 };
-        players.value.sort((a, b) => {
-          const ao = order[a.position] ?? 9, bo = order[b.position] ?? 9;
-          return ao - bo || (a.number || 0) - (b.number || 0);
-        });
-      }
-      function save() {
-        localStorage.setItem("customPlayers", JSON.stringify(players.value));
-        if (window.refreshPlayersUI) window.refreshPlayersUI(players.value);
-        alert("✅ Players saved.");
-      }
-      function close() { if (window.__closePlayerEditor) window.__closePlayerEditor(); }
-
-      // Avatar helpers (compact pill)
-      function imgError(ev) { ev.target.src = "avatars/placeholder.jpg"; }
-      function pickFile(idx) {
-        const input = document.getElementById("pe_file_" + idx);
-        if (input) input.click();
-      }
-      async function fileChosen(idx, ev) {
-        const f = ev.target?.files?.[0];
-        if (!f || !f.type.startsWith("image/")) return;
-        players.value[idx].photo = await fileToDataURLSquare(f, 128);
-        ev.target.value = "";
-      }
-      function dragOver(ev) { ev.preventDefault(); ev.currentTarget.classList.add("pe-drop--hover"); }
-      function dragLeave(ev) { ev.currentTarget.classList.remove("pe-drop--hover"); }
-      async function dropped(idx, ev) {
-        ev.preventDefault();
-        ev.currentTarget.classList.remove("pe-drop--hover");
-        const f = ev.dataTransfer?.files?.[0];
-        if (!f || !f.type.startsWith("image/")) return;
-        players.value[idx].photo = await fileToDataURLSquare(f, 128);
-      }
-      async function pasted(idx, ev) {
-        const items = ev.clipboardData?.items || [];
-        for (const it of items) {
-          if (it.type?.startsWith("image/")) {
-            const f = it.getAsFile();
-            players.value[idx].photo = await fileToDataURLSquare(f, 128);
-            break;
-          }
-        }
-      }
-
-      onMounted(load);
-
-      return {
-        players, filter, filtered,
-        add, duplicate, remove, renumber, sortByNumber, sortByPosition, save, close,
-        imgError, pickFile, fileChosen, dragOver, dragLeave, dropped, pasted
-      };
-    },
-
-    template: `
-      <div class="pe-header">
-        <div class="pe-title">Player Editor</div>
-        <div class="pe-actions">
-          <input class="pe-input" v-model="filter" placeholder="Search by name or number" style="width:220px"/>
-          <button class="pe-btn blue" @click="add()">Add</button>
-          <button class="pe-btn" @click="renumber()">Renumber</button>
-          <button class="pe-btn" @click="sortByNumber()">Sort #</button>
-          <button class="pe-btn" @click="sortByPosition()">Sort Pos</button>
-          <button class="pe-btn green" @click="save()">Save</button>
-          <button class="pe-btn red" @click="close()">Close</button>
-        </div>
+    <div class="pe-table">
+      <div class="pe-row pe-row--head">
+        <div>#</div><div>Name</div><div>Pos</div><div>Alt</div><div>Photo</div><div>Actions</div>
       </div>
 
-      <table class="pe-table">
-        <thead>
-          <tr>
-            <th style="width:70px">#</th>
-            <th style="width:26%">Name</th>
-            <th style="width:80px">Pos</th>
-            <th style="width:80px">Alt</th>
-            <th style="width:240px">Photo</th>
-            <th>URL (optional)</th>
-            <th style="width:140px">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(p, idx) in filtered" :key="idx" class="pe-row">
-            <td><input class="pe-input" type="number" v-model.number="p.number" min="0"/></td>
-            <td><input class="pe-input" v-model="p.name"/></td>
-            <td>
-              <select class="pe-input" v-model="p.position">
-                <option>GK</option><option>DEF</option><option>MID</option><option>FWD</option>
-              </select>
-            </td>
-            <td>
-              <select class="pe-input" v-model="p.altPosition">
-                <option>GK</option><option>DEF</option><option>MID</option><option>FWD</option>
-              </select>
-            </td>
+      <template v-for="(p, idx) in filtered">
+        <div class="pe-row" :key="idx">
+          <div>
+            <input v-model.number="p.number" type="number" class="pe-input w-14" min="1" />
+          </div>
 
-            <td>
-              <div class="pe-photo">
-                <img :src="p.photo" class="pe-thumb" @error="imgError"/>
-                <div class="pe-drop"
-                     title="Click to choose, or drop/paste an image"
-                     @click="pickFile(idx)"
-                     @dragover="dragOver"
-                     @dragleave="dragLeave"
-                     @drop="dropped(idx, $event)"
-                     @paste="pasted(idx, $event)">
-                  Drop / Click / Paste
-                </div>
-                <input type="file" accept="image/*" class="pe-file" :id="'pe_file_' + idx" @change="fileChosen(idx, $event)"/>
-              </div>
-            </td>
+          <div>
+            <input v-model.trim="p.name" class="pe-input w-full" placeholder="Player name" />
+          </div>
 
-            <td><input class="pe-input" v-model="p.photo" placeholder="Or paste an image URL here"/></td>
+          <div>
+            <select v-model="p.position" class="pe-input w-full">
+              <option v-for="x in POS" :key="x" :value="x">{{x}}</option>
+            </select>
+          </div>
 
-            <td class="pe-mini">
-              <button class="pe-btn" @click="duplicate(idx)">Duplicate</button>
-              <button class="pe-btn red" @click="remove(idx)">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    `,
-  }).mount("#playerEditorApp");
+          <div>
+            <select v-model="p.altPosition" class="pe-input w-full">
+              <option v-for="x in POS" :key="x" :value="x">{{x}}</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <img :src="p.photo || placeholder" @error="p.photo = placeholder"
+                 class="pe-photo" :alt="p.name" />
+            <label class="pe-drop"
+                   @dragover.prevent
+                   @drop.prevent="onDrop($event, p)"
+                   @paste="onPaste($event, p)">
+              Drop / Click / Paste
+              <input type="file" accept="image/*" @change="onFile($event, p)" />
+            </label>
+          </div>
+
+          <div class="flex gap-2 justify-end">
+            <button class="pe-btn" @click="duplicate(p)">Duplicate</button>
+            <button class="pe-btn" @click="remove(p)">Delete</button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+  `;
+
+  const app = Vue.createApp({
+    template: tpl,
+    data() {
+      return {
+        players: [],
+        q: "",
+        POS,
+        placeholder: "avatars/placeholder.jpg",
+      };
+    },
+    computed: {
+      filtered() {
+        const q = (this.q || "").toLowerCase().trim();
+        if (!q) return this.players;
+        return this.players.filter(p =>
+          String(p.number).includes(q) ||
+          (p.name || "").toLowerCase().includes(q)
+        );
+      }
+    },
+    methods: {
+      async load() {
+        try {
+          const raw = localStorage.getItem("customPlayers");
+          if (raw) {
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr) && arr.length) {
+              this.players = this._normalize(arr);
+              return;
+            }
+          }
+        } catch { }
+        if (typeof window.loadPlayersData === "function") {
+          const arr = await window.loadPlayersData();
+          this.players = this._normalize(arr || []);
+        }
+      },
+      _normalize(arr) {
+        return arr.map((p, i) => ({
+          number: Number(p.number ?? i + 1),
+          name: p.name ?? `Player ${i + 1}`,
+          position: POS.includes(p.position) ? p.position : "MID",
+          altPosition: POS.includes(p.altPosition) ? p.altPosition : "DEF",
+          photo: p.photo || this.placeholder
+        }));
+      },
+      add() {
+        const maxNum = this.players.reduce((m, p) => Math.max(m, Number(p.number) || 0), 0);
+        this.players.push({
+          number: maxNum + 1,
+          name: `Player ${maxNum + 1}`,
+          position: "MID",
+          altPosition: "DEF",
+          photo: this.placeholder
+        });
+      },
+      duplicate(p) {
+        const clone = { ...p, number: this._nextNumber() };
+        this.players.push(clone);
+      },
+      _nextNumber() {
+        return this.players.reduce((m, p) => Math.max(m, Number(p.number) || 0), 0) + 1;
+      },
+      remove(p) {
+        const i = this.players.indexOf(p);
+        if (i >= 0) this.players.splice(i, 1);
+      },
+      renumber() {
+        this.players
+          .sort((a, b) => String(a.name).localeCompare(String(b.name)))
+          .forEach((p, i) => (p.number = i + 1));
+      },
+      sortByNumber() {
+        this.players.sort((a, b) => (Number(a.number) || 0) - (Number(b.number) || 0));
+      },
+      sortByPosition() {
+        const order = { GK: 0, DEF: 1, MID: 2, FWD: 3 };
+        this.players.sort((a, b) => {
+          const d = (order[a.position] ?? 9) - (order[b.position] ?? 9);
+          return d || (Number(a.number) || 0) - (Number(b.number) || 0);
+        });
+      },
+      async onFile(e, p) {
+        const file = e.target.files?.[0];
+        if (file) p.photo = await this._toDataURL(file);
+        e.target.value = "";
+      },
+      async onDrop(e, p) {
+        const file = e.dataTransfer?.files?.[0];
+        if (file) p.photo = await this._toDataURL(file);
+      },
+      async onPaste(e, p) {
+        const items = e.clipboardData?.items || [];
+        for (const it of items) {
+          if (it.kind === "file") {
+            const file = it.getAsFile();
+            if (file) {
+              p.photo = await this._toDataURL(file);
+              break;
+            }
+          }
+        }
+      },
+      _toDataURL(file) {
+        return new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result);
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+      },
+      save() {
+        localStorage.setItem("customPlayers", JSON.stringify(this.players));
+        if (typeof window.refreshPlayersUI === "function") {
+          window.refreshPlayersUI(this.players);
+        }
+        this.close();
+        alert("✅ Players saved.");
+      },
+      close() {
+        modalEl.classList.add("hidden");
+      }
+    },
+    mounted() {
+      this.load();
+    }
+  });
+
+  app.mount(mountEl);
 })();
