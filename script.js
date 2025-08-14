@@ -279,15 +279,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // touch
-    football.addEventListener("touchstart", (e) => {
+    football.addEventListener("touchstart", (e) => { e.preventDefault();
       ballHolder = null;
       const t = e.touches[0];
       const r = football.getBoundingClientRect();
       offsetX = t.clientX - r.left; offsetY = t.clientY - r.top;
-    }, { passive: true });
-    football.addEventListener("touchmove", (e) => {
+    }, { passive: false });
+    football.addEventListener("touchmove", (e) => { e.preventDefault();
       const t = e.touches[0]; if (t) moveTo(t.clientX, t.clientY);
-    }, { passive: true });
+    }, { passive: false });
     football.addEventListener("touchend", () => snapToNearestPlayer());
   })();
 
@@ -621,6 +621,94 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  
+  // ===== Bench -> Field pointer drag (mobile friendly) =====
+  (function enableBenchPointerDrag(){
+    let drag = null; // {id, ghost}
+    function makeGhost(fromEl){
+      const g = document.createElement('div');
+      g.className = 'drag-ghost';
+      const img = fromEl.querySelector('img')?.cloneNode();
+      if (img) { img.style.width='44px'; img.style.height='44px'; img.style.borderRadius='9999px'; g.appendChild(img); }
+      else { g.style.background = '#f59e0b'; }
+      document.body.appendChild(g);
+      return g;
+    }
+    function moveGhost(clientX, clientY){
+      if (!drag) return;
+      drag.ghost.style.left = clientX + 'px';
+      drag.ghost.style.top  = clientY + 'px';
+    }
+    benchList.addEventListener('pointerdown', (e) => {
+      const card = e.target.closest('.player-card');
+      if (!card) return;
+      const pid = parseInt(card.dataset.playerId, 10);
+      if (Number.isNaN(pid)) return;
+      e.preventDefault();
+      drag = { id: pid, fromEl: card, ghost: makeGhost(card) };
+    }, { passive:false });
+
+    window.addEventListener('pointermove', (e)=>{ if (drag){ e.preventDefault(); moveGhost(e.clientX, e.clientY); } }, { passive:false });
+    window.addEventListener('pointerup', (e)=>{
+      if (!drag) return;
+      e.preventDefault();
+      const incomingId = drag.id;
+      // find drop target
+      const drop = document.elementFromPoint(e.clientX, e.clientY);
+      const targetChip = drop?.closest?.('.draggable-player');
+      if (targetChip){
+        const targetId = parseInt(targetChip.dataset.playerId, 10);
+        if (!Number.isNaN(targetId) && incomingId !== targetId) {
+          // Perform substitution (mirror existing drop handler)
+          const benchCard = benchList.querySelector(`.player-card[data-player-id="${incomingId}"]`);
+          if (benchCard && !field.querySelector(`.draggable-player[data-player-id="${incomingId}"]`)) {
+            const incoming = players[incomingId], outgoing = players[targetId];
+            if (incoming && outgoing){
+              targetChip.dataset.playerId = String(incomingId);
+              targetChip.innerHTML = playerOnPitchHTML(incoming);
+
+              benchCard.remove();
+              benchList.appendChild(createPlayerCard(outgoing, targetId, "bench"));
+              setLineupUsed(incomingId, true);
+              setLineupUsed(targetId, false);
+
+              if (currentMatchId) {
+                const m = matchById(currentMatchId);
+                if (m) {
+                  m.events.push({
+                    time: timerEl.textContent,
+                    type: "Substitution",
+                    playerId: incomingId,
+                    playerName: `#${incoming.number} ${incoming.name} ⇆ #${outgoing.number} ${outgoing.name}`,
+                  });
+                  saveMatches(matches);
+                  renderEventLog();
+                }
+              }
+              refreshEventPlayerDropdown();
+            }
+          }
+        }
+      } else if (drop?.closest?.('#formationField')) {
+        // Drop onto empty pitch: if not already on pitch and there is space, place near drop
+        if (!field.querySelector(`.draggable-player[data-player-id="${incomingId}"]`)) {
+          if (field.querySelectorAll('.draggable-player').length < 9) {
+            const r = field.getBoundingClientRect();
+            const left = Math.max(0, Math.min(e.clientX - r.left - 36, field.clientWidth - 72)) + 'px';
+            const top  = Math.max(0, Math.min(e.clientY - r.top  - 36, field.clientHeight - 72)) + 'px';
+            addPlayerToField(incomingId, players[incomingId], left, top);
+            const benchCard = benchList.querySelector(`.player-card[data-player-id="${incomingId}"]`);
+            benchCard?.remove();
+            setLineupUsed(incomingId, true);
+          }
+        }
+      }
+      drag.ghost?.remove();
+      drag = null;
+    }, { passive:false });
+  })();
+
+
   // Drag helpers for players
   function makeDraggable(el) {
     let offsetX, offsetY;
@@ -639,17 +727,17 @@ document.addEventListener("DOMContentLoaded", () => {
       document.removeEventListener("mouseup", onMouseUp);
     }
 
-    el.addEventListener("touchstart", (e) => {
+    el.addEventListener("touchstart", (e) => { e.preventDefault();
       const t = e.touches[0];
       const rect = el.getBoundingClientRect();
       offsetX = t.clientX - rect.left;
       offsetY = t.clientY - rect.top;
-    }, { passive: true });
+    }, { passive: false });
 
     el.addEventListener("touchmove", (e) => {
       const t = e.touches[0];
       moveTo(t.clientX, t.clientY);
-    }, { passive: true });
+    }, { passive: false });
 
     function moveTo(clientX, clientY) {
       const rect = field.getBoundingClientRect();
