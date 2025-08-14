@@ -455,20 +455,9 @@
 }
 
 /* Prevent scrolling while dragging on touch devices */
-html,
-body {
-  overscroll-behavior: contain;
-}
-
-#formationField,
-#formationField * {
-  touch-action: none;
-}
-
-#benchList,
-#benchList * {
-  touch-action: none;
-}
+html, body { overscroll-behavior: contain; }
+#formationField, #formationField * { touch-action: none; }
+#benchList, #benchList * { touch-action: none; }
 
 /* Drag ghost used for bench -> field pointer drag */
 .drag-ghost {
@@ -476,50 +465,8 @@ body {
   z-index: 9999;
   pointer-events: none;
   transform: translate(-50%, -50%);
-  width: 44px;
-  height: 44px;
+  width: 44px; height: 44px;
   border-radius: 9999px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
+  box-shadow: 0 8px 24px rgba(0,0,0,.45);
 }
 
-/* Center column stacks panels vertically */
-.center-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Sticky bench dock under the pitch */
-.bench-dock {
-  position: sticky;
-  bottom: 0;
-  z-index: 6;
-  background: linear-gradient(180deg, rgba(11, 18, 32, 0), #0b1220 55%);
-  border: 1px solid #1f2a44;
-  border-radius: .5rem;
-  padding-top: .5rem;
-}
-
-/* Hide the bench title to save space */
-.bench-dock .panel-title {
-  display: none;
-}
-
-/* Bench as a horizontal strip (good for drag) */
-#benchList {
-  display: flex !important;
-  flex-wrap: nowrap;
-  gap: .5rem;
-  overflow-x: auto;
-  padding: .5rem;
-  scroll-snap-type: x proximity;
-}
-
-#benchList .player-card {
-  scroll-snap-align: start;
-  min-width: 110px;
-}
-
-/* Functional fixes */
-#formationField .football-icon{ width:32px !important; height:32px !important; object-fit:contain; }
-#teamLineUpList .player-card img{ width:42px !important; height:42px !important; object-fit:cover; }
