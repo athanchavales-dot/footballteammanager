@@ -38,11 +38,7 @@
                 <span class="text-[11px] px-2 py-1 bg-slate-800 rounded">
                     Half: <b id="currentHalfLabel">—</b> • Remaining: <b id="remainingTime">00:00</b>
                 </span>
-
-                <button id="editPlayersBtn" class="btn">Edit Players</button>
-                <button id="installBtn" class="btn hidden">Install App</button>
-
-
+                <button id="openPlayerEditor" class="btn-blue">Edit Players</button>
             </div>
         </div>
     </header>
@@ -160,22 +156,33 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="script.js" defer></script>
     <script src="players-editor.js" defer></script>
-    <script>
-        let deferredPrompt = null;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('installBtn')?.classList.remove('hidden');
-        });
 
-        document.getElementById('installBtn')?.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            const e = deferredPrompt;
-            deferredPrompt = null;
-            document.getElementById('installBtn')?.classList.add('hidden');
-            await e.prompt();
-        });
-    </script>
+<script>
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.classList.remove('hidden');
+});
+document.getElementById('installBtn')?.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  const e = deferredPrompt;
+  deferredPrompt = null;
+  document.getElementById('installBtn')?.classList.add('hidden');
+  await e.prompt();
+});
+document.getElementById('resetCacheBtn')?.addEventListener('click', async () => {
+  if (!confirm('Clear cached files and reload?')) return;
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    for (const key of keys) { await caches.delete(key); }
+  }
+  localStorage.clear();
+  sessionStorage.clear();
+  location.reload(true);
+});
+</script>
 
 </body>
 

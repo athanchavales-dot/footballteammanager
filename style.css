@@ -404,7 +404,5 @@
   user-select: none;
   cursor: grab
 }
-
-.hidden {
-  display: none;
-}
+#resetCacheBtn { background: #d9534f; }
+#resetCacheBtn:hover { background: #c9302c; }

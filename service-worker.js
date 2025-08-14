@@ -9,11 +9,11 @@ const SHELL_ASSETS = [
   "./style.css",
   "./script.js",
   "./players-editor.js",
-  "./players.json",              // ← Added
   "./logo.png",
   "./Field.png",
   "./football-png-32.png",
   "./avatars/placeholder.jpg"
+  "./players.json",
 ];
 
 self.addEventListener("install", (event) => {
