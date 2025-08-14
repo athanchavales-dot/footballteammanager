@@ -1,4 +1,22 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // --- Robust default players (used if no custom or inline data is available) ---
+  const DEFAULT_PLAYERS = [
+    {"number":1,"name":"Player One","position":"GK","altPosition":"DEF","photo":"avatars/player1.jpg"},
+    {"number":2,"name":"Player Two","position":"DEF","altPosition":"MID","photo":"avatars/player2.jpg"},
+    {"number":3,"name":"Player Three","position":"DEF","altPosition":"MID","photo":"avatars/player3.jpg"},
+    {"number":4,"name":"Player Four","position":"DEF","altPosition":"FWD","photo":"avatars/player4.jpg"},
+    {"number":5,"name":"Player Five","position":"MID","altPosition":"DEF","photo":"avatars/player5.jpg"},
+    {"number":6,"name":"Player Six","position":"MID","altPosition":"FWD","photo":"avatars/player6.jpg"},
+    {"number":7,"name":"Player Seven","position":"MID","altPosition":"FWD","photo":"avatars/player7.jpg"},
+    {"number":8,"name":"Player Eight","position":"FWD","altPosition":"MID","photo":"avatars/player8.jpg"},
+    {"number":9,"name":"Player Nine","position":"FWD","altPosition":"MID","photo":"avatars/player9.jpg"},
+    {"number":10,"name":"Player Ten","position":"FWD","altPosition":"MID","photo":"avatars/player10.jpg"},
+    {"number":11,"name":"Player Eleven","position":"DEF","altPosition":"MID","photo":"avatars/player11.jpg"},
+    {"number":12,"name":"Player Twelve","position":"GK","altPosition":"DEF","photo":"avatars/player12.jpg"},
+    {"number":13,"name":"Player Thirteen","position":"DEF","altPosition":"MID","photo":"avatars/player13.jpg"},
+    {"number":14,"name":"Player Fourteen","position":"MID","altPosition":"FWD","photo":"avatars/player14.jpg"}
+  ];
+
   // DOM
   const starterList = document.getElementById("starterList");
   const benchList = document.getElementById("benchList");
@@ -11,6 +29,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveFormationToMatchBtn = document.getElementById("saveFormationToMatch");
   const putStartersBtn = document.getElementById("putStartersOnPitch");
   const formationSelect = document.getElementById("autoFormationSelect");
+
+  // --- Layout: move bench under pitch; hide Starters; make center column stack
+  try {
+    const fieldPanel = field?.closest('.panel');
+    const benchPanel = benchList?.closest('.panel');
+    const startersPanel = starterList?.closest('.panel');
+    if (fieldPanel && benchPanel && fieldPanel.after) {
+      fieldPanel.after(benchPanel);
+      benchPanel.classList.add('bench-dock');
+    }
+    if (fieldPanel?.parentElement) fieldPanel.parentElement.classList.add('center-stack');
+    if (startersPanel) startersPanel.style.display = 'none';
+
+    // minimal CSS injection for bench dock if stylesheet not updated
+    const css = `.center-stack{display:flex;flex-direction:column;gap:12px}
+.bench-dock{position:sticky;bottom:0;z-index:6;background:linear-gradient(180deg,rgba(11,18,32,0),#0b1220 55%);border:1px solid #1f2a44;border-radius:.5rem;padding-top:.5rem}
+.bench-dock .panel-title{display:none}
+#benchList{display:flex;flex-wrap:nowrap;gap:.5rem;overflow-x:auto;padding:.5rem;scroll-snap-type:x proximity}
+#benchList .player-card{scroll-snap-align:start;min-width:110px}`;
+    const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+  } catch {}
 
   const timerEl = document.getElementById("matchTimer");
   const startBtn = document.getElementById("startTimer");
@@ -111,18 +150,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const matchById = (id) => matches.find((m) => m.id === id) || null;
   const isMatchActive = () => !!currentMatchId;
 
-  function setUIEnabled(enabled) {
-    const disableClass = "disabled-ui";
-    field.classList.toggle(disableClass, !enabled);
-    document.querySelectorAll("#teamLineUpList .player-card, #saveFormation, #loadFormation, #saveFormationToMatch, #putStartersOnPitch")
-      .forEach(el => el.classList.toggle(disableClass, !enabled));
-    [startBtn, pauseBtn, resetBtn, startFirstHalfBtn, startSecondHalfBtn, halfLengthInput].forEach(el => { el.disabled = !enabled; });
+  
+  function setEventsEnabled(enabled) {
+    if (!eventForm) return;
     eventForm.querySelectorAll("select, button").forEach(el => { el.disabled = !enabled; });
+    if (exportCSVBtn) exportCSVBtn.disabled = !enabled;
+    if (!enabled) { currentHalf = 0; halfElapsed = 0; renderRemaining(); }
   }
-  const style = document.createElement("style");
-  style.textContent = `.disabled-ui{pointer-events:none!important;opacity:.4}`;
-  document.head.appendChild(style);
-  setUIEnabled(false);
+
+  // Keep UI interactive before a match; only disable event form until a match exists.
+  setEventsEnabled(false);
 
   function updateAvailabilityUI() {
     if (!teamLineUpList) return;
@@ -159,7 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderMatchOptions();
     renderEventLog();
-    setUIEnabled(true);
+    setEventsEnabled(true);
     alert("✅ New match started.");
   }
 
@@ -173,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
     currentMatchId = null;
     eventLogEl.innerHTML = "";
     updateAvailabilityUI();
-    setUIEnabled(false);
+    setEventsEnabled(false);
     alert("🗑️ Match deleted.");
   }
 
@@ -187,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
     playSec = new Array(players.length).fill(0);
     timer = 0; halfElapsed = 0; currentHalf = 0;
     renderTimer(); renderRemaining();
-    setUIEnabled(true);
+    setEventsEnabled(true);
   }
 
   // ---- FOOTBALL: manual drag + snap + stick ----
@@ -279,15 +316,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // touch
-    football.addEventListener("touchstart", (e) => { e.preventDefault();
+    football.addEventListener("touchstart", (e) => {
       ballHolder = null;
       const t = e.touches[0];
       const r = football.getBoundingClientRect();
       offsetX = t.clientX - r.left; offsetY = t.clientY - r.top;
-    }, { passive: false });
-    football.addEventListener("touchmove", (e) => { e.preventDefault();
+    }, { passive: true });
+    football.addEventListener("touchmove", (e) => {
       const t = e.touches[0]; if (t) moveTo(t.clientX, t.clientY);
-    }, { passive: false });
+    }, { passive: true });
     football.addEventListener("touchend", () => snapToNearestPlayer());
   })();
 
@@ -346,37 +383,40 @@ document.addEventListener("DOMContentLoaded", () => {
     return card;
   }
 
-  function createPlayerCard(player, index, listType) {
-    const card = document.createElement("div");
-    card.className = "player-card text-center";
-    card.dataset.playerId = index;
-    card.dataset.listType = listType;
-    card.innerHTML = `
-      <img src="${player.photo}" onerror="this.src='avatars/placeholder.jpg'" class="mx-auto rounded-full object-cover" style="width:42px;height:42px"/>
-      <div class="text-xs font-bold mt-1">#${player.number} ${player.name}</div>
-      <div class="text-[10px] text-slate-300">${player.position} / ${player.altPosition}</div>
-      ${playtimeWidgetHTML(index)}
-    `;
-    if (listType === "bench") {
-      card.setAttribute("draggable", "true");
-      card.addEventListener("dragstart", (e) => {
-        e.dataTransfer.setData("text/plain", String(index));
-        e.dataTransfer.effectAllowed = "move";
-      });
-    }
-    card.addEventListener("click", () => {
-      if (!field.querySelector(`.draggable-player[data-player-id="${index}"]`)) {
-        addPlayerToField(index, player);
-      }
+  
+function createPlayerCard(player, index, listType) {
+  const card = document.createElement("div");
+  card.className = "player-card text-center";
+  card.dataset.playerId = index;
+  card.dataset.listType = listType;
+  card.innerHTML = `
+    <img src="${player.photo}" onerror="this.src='avatars/placeholder.jpg'" class="mx-auto rounded-full object-cover" style="width:42px;height:42px"/>
+    <div class="text-xs font-bold mt-1">#${player.number} ${player.name}</div>
+    <div class="text-[10px] text-slate-300">${player.position} / ${player.altPosition}</div>
+    ${playtimeWidgetHTML(index)}
+  `;
+  if (listType === "bench") {
+    card.setAttribute("draggable", "true");
+    card.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", String(index));
+      e.dataTransfer.effectAllowed = "move";
     });
-    card.addEventListener("dblclick", () => {
-      const pid = parseInt(card.dataset.playerId);
-      card.remove();
-      setLineupUsed(pid, false);
-      getStartersCount();
-    });
-    return card;
   }
+  card.addEventListener("click", () => {
+    if (!field.querySelector(`.draggable-player[data-player-id="${index}"]`)) {
+      addPlayerToField(index, player);
+    }
+  });
+  card.addEventListener("dblclick", () => {
+    const pid = parseInt(card.dataset.playerId);
+    card.remove();
+    setLineupUsed(pid, false);
+    getStartersCount();
+  });
+  return card;
+}
+
+
 
   // Players loader (robust: only trusts non-empty custom list)
   async function loadPlayersData() {
@@ -386,22 +426,28 @@ document.addEventListener("DOMContentLoaded", () => {
         const custom = JSON.parse(customRaw);
         if (Array.isArray(custom) && custom.length > 0) return custom;
       }
-    } catch { }
+    } catch { /* ignore */ }
     try {
       const inline = document.getElementById("playersData");
-      if (inline) {
+      if (inline && inline.textContent.trim()) {
         const arr = JSON.parse(inline.textContent.trim());
         if (Array.isArray(arr) && arr.length > 0) return arr;
       }
-    } catch { }
+    } catch { /* ignore */ }
     try {
-      const res = await fetch("players.json?v=4", { cache: "no-store" });
-      if (res.ok) {
-        const arr = await res.json();
-        if (Array.isArray(arr) && arr.length > 0) return arr;
+      // try both with and without cache-busting param
+      for (const url of ["players.json?v=5", "players.json"]) {
+        try {
+          const res = await fetch(url, { cache: "no-store" });
+          if (res.ok) {
+            const arr = await res.json();
+            if (Array.isArray(arr) && arr.length > 0) return arr;
+          }
+        } catch {}
       }
-    } catch { }
-    return []; // final fallback
+    } catch {}
+    // final guaranteed fallback
+    return DEFAULT_PLAYERS;
   }
 
   loadPlayersData().then((data) => {
@@ -552,11 +598,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function playerOnPitchHTML(p) {
     return `
-    <div class="flex flex-col items-center text-center pointer-events-none select-none">
-      <img src="${p.photo || 'avatars/placeholder.jpg'}" 
-           alt="${p.name}" class="w-12 h-12 rounded-full shadow-md mb-0.5">
-      <span class="text-[10px] leading-tight font-medium truncate max-w-[84px]">${p.name}</span>
-    </div>
+      <div class="flex flex-col items-center text-center">
+        <img src="${p.photo}" onerror="this.src='avatars/placeholder.jpg'" class="w-12 h-12 rounded-full mx-auto object-cover"/>
+        <div class="text-[10px] font-medium leading-tight text-center">${p.name}</div>
+      </div>
     `;
   }
 
@@ -603,41 +648,64 @@ document.addEventListener("DOMContentLoaded", () => {
     refreshEventPlayerDropdown();
   }
 
-  function updatePlayerCardState(playerId, active) {
-    [starterList, benchList, teamLineUpList].forEach((list) => {
-      if (!list) return;
-      const card = list.querySelector(`.player-card[data-player-id="${playerId}"]`);
-      if (card) {
-        card.classList.toggle("used", active);
-        card.classList.toggle("disabled", active);
-        if (!active && card.dataset.listType === "bench") {
-          card.setAttribute("draggable", "true");
-          card.addEventListener("dragstart", (e) => {
-            e.dataTransfer.setData("text/plain", String(playerId));
-            e.dataTransfer.effectAllowed = "move";
-          });
-        }
+  
+function updatePlayerCardState(playerId, active) {
+  [starterList, benchList, teamLineUpList].forEach((list) => {
+    if (!list) return;
+    const card = list.querySelector(`.player-card[data-player-id="${playerId}"]`);
+    if (card) {
+      card.classList.toggle("used", active);
+      card.classList.toggle("disabled", active);
+      // restore drag for bench cards when they become available
+      if (!active && card.dataset.listType === "bench") {
+        card.setAttribute("draggable", "true");
+        card.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text/plain", String(playerId));
+          e.dataTransfer.effectAllowed = "move";
+        }, { once: true });
       }
-    });
+    }
+  });
+}
+});
+  }
   }
 
-  
+  // Drag helpers for players
   // ===== Bench -> Field pointer drag (mobile friendly) =====
   (function enableBenchPointerDrag(){
+    if (!benchList || !field) return;
+
+    // apply touch-action/overscroll safeguards
+    try {
+      document.documentElement.style.overscrollBehavior = 'contain';
+      field.style.touchAction = 'none';
+      benchList.style.touchAction = 'none';
+    } catch {}
+
     let drag = null; // {id, ghost}
+
     function makeGhost(fromEl){
       const g = document.createElement('div');
       g.className = 'drag-ghost';
+      g.style.position = 'fixed';
+      g.style.zIndex = '9999';
+      g.style.pointerEvents = 'none';
+      g.style.transform = 'translate(-50%,-50%)';
+      g.style.width = '44px';
+      g.style.height = '44px';
+      g.style.borderRadius = '9999px';
+      g.style.boxShadow = '0 8px 24px rgba(0,0,0,.45)';
       const img = fromEl.querySelector('img')?.cloneNode();
       if (img) { img.style.width='44px'; img.style.height='44px'; img.style.borderRadius='9999px'; g.appendChild(img); }
       else { g.style.background = '#f59e0b'; }
       document.body.appendChild(g);
       return g;
     }
-    function moveGhost(clientX, clientY){
+    function moveGhost(e){
       if (!drag) return;
-      drag.ghost.style.left = clientX + 'px';
-      drag.ghost.style.top  = clientY + 'px';
+      drag.ghost.style.left = e.clientX + 'px';
+      drag.ghost.style.top  = e.clientY + 'px';
     }
     benchList.addEventListener('pointerdown', (e) => {
       const card = e.target.closest('.player-card');
@@ -648,18 +716,16 @@ document.addEventListener("DOMContentLoaded", () => {
       drag = { id: pid, fromEl: card, ghost: makeGhost(card) };
     }, { passive:false });
 
-    window.addEventListener('pointermove', (e)=>{ if (drag){ e.preventDefault(); moveGhost(e.clientX, e.clientY); } }, { passive:false });
+    window.addEventListener('pointermove', (e)=>{ if (drag){ e.preventDefault(); moveGhost(e); } }, { passive:false });
     window.addEventListener('pointerup', (e)=>{
       if (!drag) return;
       e.preventDefault();
       const incomingId = drag.id;
-      // find drop target
       const drop = document.elementFromPoint(e.clientX, e.clientY);
       const targetChip = drop?.closest?.('.draggable-player');
       if (targetChip){
         const targetId = parseInt(targetChip.dataset.playerId, 10);
         if (!Number.isNaN(targetId) && incomingId !== targetId) {
-          // Perform substitution (mirror existing drop handler)
           const benchCard = benchList.querySelector(`.player-card[data-player-id="${incomingId}"]`);
           if (benchCard && !field.querySelector(`.draggable-player[data-player-id="${incomingId}"]`)) {
             const incoming = players[incomingId], outgoing = players[targetId];
@@ -690,7 +756,6 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
       } else if (drop?.closest?.('#formationField')) {
-        // Drop onto empty pitch: if not already on pitch and there is space, place near drop
         if (!field.querySelector(`.draggable-player[data-player-id="${incomingId}"]`)) {
           if (field.querySelectorAll('.draggable-player').length < 9) {
             const r = field.getBoundingClientRect();
@@ -708,8 +773,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, { passive:false });
   })();
 
-
-  // Drag helpers for players
   function makeDraggable(el) {
     let offsetX, offsetY;
 
@@ -727,17 +790,17 @@ document.addEventListener("DOMContentLoaded", () => {
       document.removeEventListener("mouseup", onMouseUp);
     }
 
-    el.addEventListener("touchstart", (e) => { e.preventDefault();
+    el.addEventListener("touchstart", (e) => {
       const t = e.touches[0];
       const rect = el.getBoundingClientRect();
       offsetX = t.clientX - rect.left;
       offsetY = t.clientY - rect.top;
-    }, { passive: false });
+    }, { passive: true });
 
     el.addEventListener("touchmove", (e) => {
       const t = e.touches[0];
       moveTo(t.clientX, t.clientY);
-    }, { passive: false });
+    }, { passive: true });
 
     function moveTo(clientX, clientY) {
       const rect = field.getBoundingClientRect();
