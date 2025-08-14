@@ -12,9 +12,10 @@ const SHELL_ASSETS = [
   "./logo.png",
   "./Field.png",
   "./football-png-32.png",
-  "./avatars/placeholder.jpg"
-  "./players.json",
+  "./avatars/placeholder.jpg",  // ← add comma
+  "./players.json",             // keep this
 ];
+
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(PRECACHE).then((cache) => cache.addAll(SHELL_ASSETS)));

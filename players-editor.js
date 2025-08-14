@@ -144,7 +144,8 @@
       duplicate(p) {
         const clone = { ...p, number: this._nextNumber() };
         this.players.push(clone);
-      },
+      }
+      ,
       _nextNumber() {
         return this.players.reduce((m, p) => Math.max(m, Number(p.number) || 0), 0) + 1;
       },

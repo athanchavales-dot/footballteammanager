@@ -277,7 +277,7 @@
 
 .pe-row {
   display: grid;
-  grid-template-columns: 56px 1fr 90px 90px 160px minmax(180px, 1fr) 170px;
+  grid-template-columns: 56px 1fr 90px 90px 220px 170px;
   gap: .5rem;
   align-items: center;
   background: #0f172a;
@@ -404,5 +404,11 @@
   user-select: none;
   cursor: grab
 }
-#resetCacheBtn { background: #d9534f; }
-#resetCacheBtn:hover { background: #c9302c; }
+
+#resetCacheBtn {
+  background: #d9534f;
+}
+
+#resetCacheBtn:hover {
+  background: #c9302c;
+}
