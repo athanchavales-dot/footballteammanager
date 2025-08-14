@@ -103,3 +103,60 @@
     font-size: 11px;
     opacity: .7;
 }
+
+/* --- Pitch background (image + fallback stripes) --- */
+#formationField {
+    /* If Field.png is at repo root (case-sensitive on Pages!) */
+    background-image: url("./Field.png"),
+        repeating-linear-gradient(90deg, #1f482e 0 7%, #1b4029 7% 14%);
+    background-size: cover, auto;
+    background-position: center;
+    background-color: #0f2a1f;
+    /* solid fallback */
+}
+
+/* --- Game Changers rail: compact cards --- */
+.bench-rail-list .player-card {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .4rem
+}
+
+.bench-rail-list .player-card img {
+    width: 36px;
+    height: 36px
+}
+
+.bench-rail-list .player-card .pt-wrap {
+    display: none
+}
+
+/* --- All Players dock: normal size avatars (override old rules) --- */
+#teamLineUpList .player-card img,
+.lineup img {
+    width: 42px !important;
+    height: 42px !important;
+    object-fit: cover;
+}
+
+#teamLineUpList .player-card {
+    padding: .45rem;
+    border-radius: .55rem;
+    background: #0f172a;
+    border: 1px solid #1f2a44
+}
+
+/* Keep the bottom strip scrollable and tidy */
+.lineup-scroll {
+    display: flex;
+    gap: .5rem;
+    overflow-x: auto;
+    padding: .5rem 0;
+    scroll-snap-type: x proximity
+}
+
+.lineup-scroll .player-card {
+    scroll-snap-align: start;
+    min-width: 110px
+}
