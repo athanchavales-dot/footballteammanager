@@ -21,40 +21,27 @@
         <div>#</div><div>Name</div><div>Pos</div><div>Alt</div><div>Photo</div><div>Actions</div>
       </div>
 
-      <template v-for="(p, idx) in filtered">
-        <div class="pe-row" :key="idx">
-          <div>
-            <input v-model.number="p.number" type="number" class="pe-input w-14" min="1" />
-          </div>
-
-          <div>
-            <input v-model.trim="p.name" class="pe-input w-full" placeholder="Player name" />
-          </div>
-
+      <template v-for="(p, idx) in filtered" :key="idx">
+        <div class="pe-row">
+          <div><input v-model.number="p.number" type="number" class="pe-input w-14" min="1" /></div>
+          <div><input v-model.trim="p.name" class="pe-input w-full" placeholder="Player name" /></div>
           <div>
             <select v-model="p.position" class="pe-input w-full">
               <option v-for="x in POS" :key="x" :value="x">{{x}}</option>
             </select>
           </div>
-
           <div>
             <select v-model="p.altPosition" class="pe-input w-full">
               <option v-for="x in POS" :key="x" :value="x">{{x}}</option>
             </select>
           </div>
-
           <div class="flex items-center gap-3">
-            <img :src="p.photo || placeholder" @error="p.photo = placeholder"
-                 class="pe-photo" :alt="p.name" />
-            <label class="pe-drop"
-                   @dragover.prevent
-                   @drop.prevent="onDrop($event, p)"
-                   @paste="onPaste($event, p)">
+            <img :src="p.photo || placeholder" @error="p.photo = placeholder" class="pe-photo" :alt="p.name" />
+            <label class="pe-drop" @dragover.prevent @drop.prevent="onDrop($event, p)" @paste="onPaste($event, p)">
               Drop / Click / Paste
               <input type="file" accept="image/*" @change="onFile($event, p)" />
             </label>
           </div>
-
           <div class="flex gap-2 justify-end">
             <button class="pe-btn" @click="duplicate(p)">Duplicate</button>
             <button class="pe-btn" @click="remove(p)">Delete</button>
@@ -87,6 +74,7 @@
     },
     methods: {
       async load() {
+        // 1) custom players from localStorage
         try {
           const raw = localStorage.getItem("customPlayers");
           if (raw) {
@@ -97,11 +85,42 @@
             }
           }
         } catch { }
+
+        // 2) if the page’s loader exists, use it
         if (typeof window.loadPlayersData === "function") {
           const arr = await window.loadPlayersData();
           this.players = this._normalize(arr || []);
+          return;
         }
+
+        // 3) read inline JSON as fallback
+        try {
+          const inline = document.getElementById("playersData");
+          if (inline?.textContent) {
+            const arr = JSON.parse(inline.textContent.trim());
+            if (Array.isArray(arr) && arr.length) {
+              this.players = this._normalize(arr);
+              return;
+            }
+          }
+        } catch { }
+
+        // 4) final fallback: fetch players.json directly
+        try {
+          const res = await fetch("players.json?v=5", { cache: "no-store" });
+          if (res.ok) {
+            const arr = await res.json();
+            if (Array.isArray(arr) && arr.length) {
+              this.players = this._normalize(arr);
+              return;
+            }
+          }
+        } catch { }
+
+        // Nothing worked – keep empty array
+        this.players = [];
       },
+
       _normalize(arr) {
         return arr.map((p, i) => ({
           number: Number(p.number ?? i + 1),
@@ -111,6 +130,7 @@
           photo: p.photo || this.placeholder
         }));
       },
+
       add() {
         const maxNum = this.players.reduce((m, p) => Math.max(m, Number(p.number) || 0), 0);
         this.players.push({
@@ -161,10 +181,7 @@
         for (const it of items) {
           if (it.kind === "file") {
             const file = it.getAsFile();
-            if (file) {
-              p.photo = await this._toDataURL(file);
-              break;
-            }
+            if (file) { p.photo = await this._toDataURL(file); break; }
           }
         }
       },
@@ -190,6 +207,12 @@
     },
     mounted() {
       this.load();
+      // If the page defines loadPlayersData later, refresh once more.
+      window.addEventListener("DOMContentLoaded", () => {
+        if (!this.players.length && typeof window.loadPlayersData === "function") {
+          this.load();
+        }
+      });
     }
   });
 
