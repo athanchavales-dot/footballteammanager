@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tablet Formation Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            background: #f2f2f2;
+        }
+
+        header {
+            background: #444;
+            color: white;
+            padding: 0.5em;
+            text-align: center;
+        }
+
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5em;
+            padding: 0.5em;
+            background: #ddd;
+        }
+
+        button {
+            font-size: 1rem;
+            padding: 0.6em 1em;
+            border: none;
+            background: #666;
+            color: white;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        button:active {
+            background: #888;
+        }
+
+        #pitch {
+            position: relative;
+            width: 100%;
+            background: #cce0cc;
+            aspect-ratio: 2/3;
+            overflow: hidden;
+        }
+
+        .position-zone {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px dashed rgba(0, 0, 0, 0.2);
+        }
+
+        .player-chip {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #666;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .player-chip.dragging {
+            opacity: 0.5;
+        }
+
+        .player-chip .num {
+            font-weight: bold;
+        }
+
+        .player-chip .name {
+            font-size: 0.7rem;
+        }
+
+        #bench {
+            background: #bbb;
+            display: flex;
+            overflow-x: auto;
+            gap: 0.5em;
+            padding: 0.5em;
+            position: sticky;
+            bottom: 0;
+        }
+
+        .bench-chip {
+            min-width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #666;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #log {
+            background: #fff;
+            padding: 0.5em;
+            font-size: 0.9rem;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Tablet Formation Test</h1>
+    </header>
+
+    <div id="controls">
+        <button id="saveA">Save A</button>
+        <button id="loadA">Load A</button>
+        <button id="saveB">Save B</button>
+        <button id="loadB">Load B</button>
+        <button id="saveC">Save C</button>
+        <button id="loadC">Load C</button>
+        <button id="subModeBtn">Sub Mode: Off</button>
+        <button id="clearLog">Clear Log</button>
+    </div>
+
+    <div id="pitch"></div>
+
+    <div id="bench"></div>
+
+    <div id="log"></div>
+
+    <script>
+        const pitch = document.getElementById('pitch');
+        const bench = document.getElementById('bench');
+        const logDiv = document.getElementById('log');
+
+        let players = [];
+        let formation = {};
+        let subMode = false;
+        let subSelected = null;
+
+        function logEvent(msg) {
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${msg}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function loadPlayers() {
+            const stored = localStorage.getItem("customPlayers");
+            if (stored) {
+                players = JSON.parse(stored);
+            } else {
+                const res = await fetch('players.json');
+                players = await res.json();
+            }
+        }
+        function renderPitch() {
+            pitch.innerHTML = '';
+            const cols = 3, rows = 3;
+            const spacingX = pitch.clientWidth / (cols + 1);
+            const spacingY = pitch.clientHeight / (rows + 1);
+            let id = 0;
+            for (let r = 1; r <= rows; r++) {
+                for (let c = 1; c <= cols; c++) {
+                    const zone = document.createElement('div');
+                    zone.className = 'position-zone';
+                    const x = c * spacingX - 40;
+                    const y = r * spacingY - 40;
+                    zone.style.left = x + 'px';
+                    zone.style.top = y + 'px';
+                    zone.dataset.zoneId = id;
+                    pitch.appendChild(zone);
+                    id++;
+                }
+            }
+        }
+        function renderPlayers() {
+            bench.innerHTML = '';
+            players.forEach(p => {
+                if (formation[p.number] != null) {
+                    placePlayerChip(p, formation[p.number]);
+                } else {
+                    const chip = document.createElement('div');
+                    chip.className = 'bench-chip';
+                    chip.innerHTML = `<div class="num">${p.number}</div><div class="name">${p.name}</div>`;
+                    chip.onclick = () => {
+                        if (subMode) {
+                            subSelected = p;
+                            logEvent(`Selected ${p.name} for substitution`);
+                        }
+                    };
+                    bench.appendChild(chip);
+                }
+            });
+        }
+        function placePlayerChip(player, zoneId) {
+            const zone = pitch.querySelector(`.position-zone[data-zone-id="${zoneId}"]`);
+            if (!zone) return;
+            const chip = document.createElement('div');
+            chip.className = 'player-chip';
+            chip.innerHTML = `<div class="num">${player.number}</div><div class="name">${player.name}</div>`;
+            chip.style.left = zone.style.left;
+            chip.style.top = zone.style.top;
+            chip.onclick = () => {
+                if (subMode && subSelected) {
+                    const old = players.find(p => p.number === player.number);
+                    formation[subSelected.number] = zoneId;
+                    delete formation[player.number];
+                    subSelected = null;
+                    renderPlayers();
+                    logEvent(`Sub: ${old.name} ↔ ${player.name}`);
+                }
+            };
+            pitch.appendChild(chip);
+        }
+
+        function saveFormation(slot) {
+            localStorage.setItem('formation_' + slot, JSON.stringify(formation));
+            logEvent(`Formation ${slot} saved`);
+        }
+        function loadFormation(slot) {
+            const f = localStorage.getItem('formation_' + slot);
+            if (f) {
+                formation = JSON.parse(f);
+                renderPlayers();
+                logEvent(`Formation ${slot} loaded`);
+            }
+        }
+
+        document.getElementById('saveA').onclick = () => saveFormation('A');
+        document.getElementById('loadA').onclick = () => loadFormation('A');
+        document.getElementById('saveB').onclick = () => saveFormation('B');
+        document.getElementById('loadB').onclick = () => loadFormation('B');
+        document.getElementById('saveC').onclick = () => saveFormation('C');
+        document.getElementById('loadC').onclick = () => loadFormation('C');
+
+        document.getElementById('subModeBtn').onclick = () => {
+            subMode = !subMode;
+            document.getElementById('subModeBtn').textContent = `Sub Mode: ${subMode ? 'On' : 'Off'}`;
+            if (!subMode) subSelected = null;
+        };
+
+        document.getElementById('clearLog').onclick = () => logDiv.innerHTML = '';
+
+        window.addEventListener('resize', () => {
+            renderPitch();
+            renderPlayers();
+        });
+
+        (async () => {
+            await loadPlayers();
+            renderPitch();
+            renderPlayers();
+        })();
+    </script>
+</body>
+
+</html>
