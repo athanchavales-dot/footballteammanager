@@ -404,3 +404,7 @@
   user-select: none;
   cursor: grab
 }
+
+.hidden {
+  display: none;
+}

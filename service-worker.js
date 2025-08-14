@@ -1,5 +1,5 @@
 // Clean cache version to ensure latest UI is served (no pass UI anywhere)
-const PRECACHE = "bnfc-shell-v3";
+const PRECACHE = "bnfc-shell-v4";
 const RUNTIME = "bnfc-runtime-v1";
 
 const SHELL_ASSETS = [
@@ -9,6 +9,7 @@ const SHELL_ASSETS = [
   "./style.css",
   "./script.js",
   "./players-editor.js",
+  "./players.json",              // ← Added
   "./logo.png",
   "./Field.png",
   "./football-png-32.png",
