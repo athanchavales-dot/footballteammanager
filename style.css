@@ -137,15 +137,31 @@
   max-height: 72vh;
 }
 
+/* Compact on-field chip: image + name only */
 .draggable-player {
   position: absolute;
   cursor: move;
-  background: #facc15;
-  padding: 2px 4px;
-  font-size: .72rem;
-  border-radius: .25rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, .15)
+
+  /* remove the big yellow card look */
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  
 }
+
+/* let the content define color; don't force black */
+.draggable-player,
+.draggable-player * {
+  color: inherit !important;
+}
+
+/* optional: subtle hover outline so you can still “see” the chip hitbox */
+.draggable-player:hover {
+  outline: 2px dashed rgba(255, 255, 255, .25);
+  outline-offset: 2px;
+}
+
 
 .draggable-player.drop-target {
   outline: 3px dashed rgba(255, 255, 255, .35);

@@ -552,9 +552,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function playerOnPitchHTML(p) {
     return `
-      <img src="${p.photo}" onerror="this.src='avatars/placeholder.jpg'" class="w-12 h-12 rounded-full mx-auto object-cover"/>
-      <div class="text-xs font-bold text-center mt-1">#${p.number} ${p.name}</div>
-      <div class="text-[10px] text-center">${p.position} / ${p.altPosition}</div>
+    <div class="flex flex-col items-center text-center pointer-events-none select-none">
+      <img src="${p.photo || 'avatars/placeholder.jpg'}" 
+           alt="${p.name}" class="w-12 h-12 rounded-full shadow-md mb-0.5">
+      <span class="text-[10px] leading-tight font-medium truncate max-w-[84px]">${p.name}</span>
+    </div>
     `;
   }
 
