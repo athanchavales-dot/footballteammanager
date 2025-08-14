@@ -1,37 +1,105 @@
-:root{--right:minmax(320px,26rem)}
-.shell{max-width:2000px;margin-inline:auto}
-/* Buttons / Inputs */
-.btn{background:#1f2937;color:#e5e7eb;border-radius:.35rem;padding:.38rem .6rem;border:1px solid #334155}
-.btn-green{background:#059669;color:#fff;border-radius:.35rem;padding:.38rem .6rem;border:1px solid #065f46}
-.btn-amber{background:#f59e0b;color:#111827;border-radius:.35rem;padding:.38rem .6rem;border:1px solid #b45309}
-.btn-rose{background:#ef4444;color:#fff;border-radius:.35rem;padding:.38rem .6rem;border:1px solid #991b1b}
-.btn-blue{background:#2563eb;color:#fff;border-radius:.35rem;padding:.38rem .6rem;border:1px solid #1e40af}
-.btn-indigo{background:#4f46e5;color:#fff;border-radius:.35rem;padding:.38rem .6rem;border:1px solid #3730a3}
-.input{background:#0b1220;color:#e5e7eb;border:1px solid #334155;border-radius:.35rem;padding:.38rem .55rem}
-/* Panels */
-.panel{background:#0b1220;border:1px solid #1f2a44;border-radius:.5rem;padding:12px}
-.panel-title{font-weight:700;color:#e2e8f0;margin-bottom:.35rem}
-.panel-subtitle{font-weight:600;color:#cbd5e1;margin-top:.35rem}
-.list li{padding:.25rem .5rem;background:#0f172a;border:1px solid #1f2a44;border-radius:.35rem}
-/* Main app grid: left = pitch section, right = controls */
-.app-grid{display:grid;grid-template-columns:1fr var(--right);gap:12px}
-@media (max-width:1100px){.app-grid{grid-template-columns:1fr}}
-/* Pitch + rail */
-.pitch-wrap{display:grid;grid-template-columns:1fr 280px;gap:12px}
-@media (max-width:1100px){.pitch-wrap{grid-template-columns:1fr}.bench-rail{order:2}}
-#formationField{background-image:url('Field.png');background-size:cover;background-position:center;border-radius:.5rem;aspect-ratio:16/10;min-height:380px;max-height:72vh;position:relative}
-/* Rail */
-.bench-rail .panel-title{margin-bottom:.5rem}
-.bench-rail-list{display:flex;flex-direction:column;gap:.5rem;max-height:60vh;overflow:auto}
-.bench-rail-list .player-card{min-width:unset}
-/* Player manager dock */
-.bottom-dock{padding-bottom:.35rem}
-.lineup-scroll{display:flex;gap:.5rem;overflow-x:auto;padding:.5rem 0;scroll-snap-type:x proximity}
-.lineup-scroll .player-card{scroll-snap-align:start;min-width:110px}
-/* Cards + on‑field chips */
-.player-card{background:#0f172a;border:1px solid #1f2a44;border-radius:.55rem;padding:.45rem}
-.player-card img{width:42px;height:42px}
-.player-card.used{opacity:.35}.player-card.disabled{pointer-events:none}
-.draggable-player{position:absolute;cursor:move;background:transparent;padding:0}
-#formationField .draggable-player span{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7);font-size:10px;max-width:84px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.text-small{font-size:11px;opacity:.7}
+/* ===== UI.JPG layout ===== */
+
+/* main grid: left = pitch column, right = controls */
+.app-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 26rem);
+    gap: 12px;
+}
+
+@media (max-width:1100px) {
+    .app-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* pitch + slim vertical rail for Game Changers */
+.pitch-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 12px;
+}
+
+@media (max-width:1100px) {
+    .pitch-wrap {
+        grid-template-columns: 1fr;
+    }
+
+    .bench-rail {
+        order: 2;
+    }
+}
+
+/* Game Changers list (vertical) */
+.bench-rail .panel-title {
+    margin-bottom: .5rem;
+}
+
+.bench-rail-list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    max-height: 60vh;
+    overflow: auto;
+}
+
+.bench-rail-list .player-card {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .4rem;
+}
+
+.bench-rail-list .player-card img {
+    width: 36px;
+    height: 36px;
+}
+
+.bench-rail-list .player-card .pt-wrap {
+    display: none;
+}
+
+/* hide playtime bars in rail */
+
+/* Player Manager dock under the pitch */
+.bottom-dock {
+    padding-bottom: .35rem;
+}
+
+.lineup-scroll {
+    display: flex;
+    gap: .5rem;
+    overflow-x: auto;
+    padding: .5rem 0;
+    scroll-snap-type: x proximity;
+}
+
+.lineup-scroll .player-card {
+    scroll-snap-align: start;
+    min-width: 110px;
+}
+
+/* On-field chips: compact name with white text */
+#formationField .draggable-player span {
+    color: #fff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .7);
+    font-size: 10px;
+    line-height: 1.1;
+    max-width: 84px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Ensure the football icon is small */
+#formationField .football-icon {
+    width: 32px !important;
+    height: 32px !important;
+    object-fit: contain;
+}
+
+/* helper */
+.text-small {
+    font-size: 11px;
+    opacity: .7;
+}
