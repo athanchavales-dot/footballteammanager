@@ -147,7 +147,7 @@
   padding: 0;
   border-radius: 0;
   box-shadow: none;
-  
+
 }
 
 /* let the content define color; don't force black */
@@ -167,6 +167,7 @@
   outline: 3px dashed rgba(255, 255, 255, .35);
   outline-offset: 2px
 }
+
 
 /* Player manager cards */
 .player-card {
@@ -386,12 +387,7 @@
   height: 34px !important
 }
 
-/* Force black text on pitch markers */
-.pitch-player-card,
-.draggable-player,
-.draggable-player * {
-  color: #000 !important
-}
+
 
 /* Mobile tweaks */
 @media (max-width:640px) {
@@ -443,4 +439,17 @@
 
 #resetCacheBtn:hover {
   background: #c9302c;
+}
+
+/* White text + shadow for on-field player names, with controlled font size/width */
+#formationField .draggable-player span {
+  color: #fff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  font-size: 10px;
+  line-height: 1.1;
+  font-weight: 500;
+  max-width: 84px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
