@@ -30,7 +30,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const putStartersBtn = document.getElementById("putStartersOnPitch");
   const formationSelect = document.getElementById("autoFormationSelect");
 
-  // --- Layout: move bench under pitch; hide Starters; make center column stack
+  // (removed runtime layout relocation; handled by HTML/CSS)
+
   try {
     const fieldPanel = field?.closest('.panel');
     const benchPanel = benchList?.closest('.panel');
@@ -151,14 +152,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const isMatchActive = () => !!currentMatchId;
 
   
-  function setEventsEnabled(enabled) {
-    if (!eventForm) return;
+function setEventsEnabled(enabled) {
+  if (typeof eventForm !== 'undefined' && eventForm) {
     eventForm.querySelectorAll("select, button").forEach(el => { el.disabled = !enabled; });
-    if (exportCSVBtn) exportCSVBtn.disabled = !enabled;
-    if (!enabled) { currentHalf = 0; halfElapsed = 0; renderRemaining(); }
   }
-
-  // Keep UI interactive before a match; only disable event form until a match exists.
+  if (typeof exportCSVBtn !== 'undefined' && exportCSVBtn) exportCSVBtn.disabled = !enabled;
+}
+);
+    eventForm.querySelectorAll("select, button").forEach(el => { el.disabled = !enabled; });
+  }
   setEventsEnabled(false);
 
   function updateAvailabilityUI() {
@@ -669,8 +671,6 @@ function updatePlayerCardState(playerId, active) {
 }
 });
   }
-  }
-
   // Drag helpers for players
   // ===== Bench -> Field pointer drag (mobile friendly) =====
   (function enableBenchPointerDrag(){
