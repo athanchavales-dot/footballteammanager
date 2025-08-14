@@ -72,7 +72,8 @@
                 </div>
             </div>
             <div id="formationField"
-                class="relative h-[46vh] min-h-[320px] rounded-lg overflow-hidden border border-slate-800"></div>
+                class="relative   rounded-lg overflow-hidden border border-slate-800 w-full aspect-[16/10] max-h-[72vh] min-h-[380px] lg:min-h-[440px]">
+            </div>
         </section>
 
         <section class="panel" style="grid-area:right">
@@ -156,34 +157,6 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="script.js" defer></script>
     <script src="players-editor.js" defer></script>
-
-<script>
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  const btn = document.getElementById('installBtn');
-  if (btn) btn.classList.remove('hidden');
-});
-document.getElementById('installBtn')?.addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-  const e = deferredPrompt;
-  deferredPrompt = null;
-  document.getElementById('installBtn')?.classList.add('hidden');
-  await e.prompt();
-});
-document.getElementById('resetCacheBtn')?.addEventListener('click', async () => {
-  if (!confirm('Clear cached files and reload?')) return;
-  if ('caches' in window) {
-    const keys = await caches.keys();
-    for (const key of keys) { await caches.delete(key); }
-  }
-  localStorage.clear();
-  sessionStorage.clear();
-  location.reload(true);
-});
-</script>
-
 </body>
 
 </html>

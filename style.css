@@ -113,12 +113,28 @@
   }
 }
 
+@media (min-width: 1024px) {
+  #formationField {
+    min-height: 440px;
+  }
+}
+
+/* example: widen the center column’s minimum */
+.main-grid {
+  grid-template-columns: var(--sidebar) minmax(640px, 1fr) var(--right);
+}
+
 /* Pitch */
 #formationField {
   background-image: url("Field.png");
   background-size: cover;
   background-position: center;
-  background-repeat: no-repeat
+  background-repeat: no-repeat width: 100%;
+  aspect-ratio: 16 / 10;
+  height: auto;
+  /* derived from width */
+  min-height: 380px;
+  max-height: 72vh;
 }
 
 .draggable-player {
