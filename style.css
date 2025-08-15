@@ -97,8 +97,8 @@
 .grid-dashboard {
   display: grid;
   grid-template-columns: var(--left) var(--center) var(--right);
-  grid-template-rows: auto auto;
-  grid-template-areas: "left center right" "bottom-left bottom-left bottom-right"
+  grid-template-rows: auto auto auto;
+  grid-template-areas: "top top top" "left center right" "bottom bottom bottom"
 }
 
 @media (max-width:1400px) {
@@ -110,7 +110,7 @@
 @media (max-width:1100px) {
   .grid-dashboard {
     grid-template-columns: 1fr;
-    grid-template-areas: "center" "right" "left" "bottom-left" "bottom-right"
+    grid-template-areas: "top" "left" "center" "right" "bottom"
   }
 }
 
@@ -482,3 +482,140 @@ body {
   border-radius: 9999px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
 }
+
+#playerManager {
+  display: block;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin: 1rem auto;
+  padding: 1rem;
+  background-color: var(--section-bg);
+  border-radius: 8px;
+}
+
+#playerManager {
+  display: flex;
+  flex-wrap: nowrap;
+  /* no wrapping — one row */
+  overflow-x: auto;
+  /* horizontal scroll if too many players */
+  gap: 10px;
+  padding: 1rem;
+  background-color: var(--section-bg);
+  border-radius: 8px;
+}
+
+#playerManager::-webkit-scrollbar {
+  height: 8px;
+}
+
+#playerManager::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+
+
+/* Player Manager: responsive full-width single-row strip */
+#playerManager {
+  display: flex;
+  flex-wrap: nowrap;
+  /* Always one row */
+  overflow-x: auto;
+  /* Horizontal scroll when needed */
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--section-bg);
+  border-radius: 8px;
+  width: 100%;
+  /* Full width */
+  box-sizing: border-box;
+  /* Include padding in width calc */
+}
+
+#playerManager>* {
+  flex: 0 0 auto;
+  /* Prevent wrap/shrink */
+}
+
+#playerManager::-webkit-scrollbar {
+  height: 6px;
+}
+
+#playerManager::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.player-manager {
+  display: flex;
+  flex-wrap: nowrap;
+  /* No wrapping */
+  overflow-x: auto;
+  /* Scroll if needed */
+  gap: 10px;
+  /* Space between cards */
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.player-manager .player-card {
+  flex: 0 0 auto;
+  /* Prevent shrinking or stretching */
+}
+
+.player-manager-wrapper {
+  width: 100%;
+  background: #0d1b2a;
+  /* match your theme */
+  padding: 10px 0;
+  overflow-x: auto;
+}
+
+.player-manager {
+  display: flex;
+  flex-wrap: nowrap;
+  /* single row */
+  overflow-x: auto;
+  padding: 0 10px;
+  gap: 10px;
+}
+
+.player-manager::-webkit-scrollbar {
+  height: 8px;
+}
+
+.player-manager::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+.player-manager .player-card {
+  flex: 0 0 auto;
+  /* no stretching */
+  min-width: 140px;
+  /* adjust to match design */
+}
+
+/* === Player Manager: compact full-width single-row strip (merged) === */
+#playerManager{ display:block !important; padding:8px 8px 6px; }
+#playerManager .pm-strip{
+  display:flex; align-items:center; gap:.5rem;
+  overflow-x:auto; padding:0 .25rem;
+}
+#playerManager .pm-title{ flex:0 0 auto; font-size:.75rem; opacity:.7; white-space:nowrap; }
+#playerManager .pm-row{
+  display:flex !important; flex-wrap:nowrap !important; gap:.35rem;
+  overflow-x:auto; overflow-y:hidden; list-style:none; margin:0; padding:0;
+  width:100%;
+}
+#playerManager .pm-row .player-card{ flex:0 0 auto; min-width:120px; padding:.25rem !important; border-radius:.5rem; }
+#playerManager .pm-row .player-card img{ width:28px !important; height:28px !important; }
+#playerManager .pm-actions{ display:flex; gap:.5rem; padding-top:.4rem; }
+#playerManager #putStartersOnPitch{ display:inline-block !important; flex:0 0 auto; }
+
+/* Ensure the old .lineup grid does not reapply here */
+#playerManager .lineup{ display:flex !important; grid-template-columns:none !important; }
