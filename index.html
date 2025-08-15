@@ -15,6 +15,7 @@
 
 <body class="bg-slate-900 text-slate-100">
     <header class="w-full border-b border-slate-800 bg-slate-950">
+        <!-- Backup / Restore -->
         <div class="backup-controls" style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0;">
             <button id="exportBtn" class="btn">Export Data</button>
             <label class="btn" style="cursor:pointer;">
@@ -43,8 +44,20 @@
     </header>
 
     <main class="shell px-3 sm:px-4 py-3 grid-dashboard gap-3">
+        <section class="panel" style="grid-area:left">
+            <div class="panel-title flex items-center justify-between">
+                <span>Player Manager</span>
+                <button id="putStartersOnPitch" class="btn-green hidden">Put Starters</button>
+            </div>
+            <div class="text-[11px] opacity-70 mb-2">Team Line Up (All Players)</div>
+            <ul id="teamLineUpList" class="lineup text-sm"></ul>
+            <div class="flex gap-2 pt-2 sticky-actions">
+                <button id="saveFormation" class="btn">Save</button>
+                <button id="loadFormation" class="btn">Load</button>
+                <button id="saveFormationToMatch" class="btn-indigo">Attach To Match</button>
+            </div>
+        </section>
 
-        <!-- PITCH & FORMATION -->
         <section class="panel" style="grid-area:center">
             <div class="panel-title flex items-center justify-between">
                 <span>Pitch & Formation</span>
@@ -58,82 +71,56 @@
                     </select>
                 </div>
             </div>
-            <!-- NEW: panel-body wrapper -->
-            <div class="panel-body panel-body--pitch">
-                <div id="formationField"
-                    class="relative rounded-lg overflow-hidden border border-slate-800 w-full aspect-[16/10] max-h-[72vh] min-h-[380px] lg:min-h-[440px]">
-                </div>
+            <div id="formationField"
+                class="relative   rounded-lg overflow-hidden border border-slate-800 w-full aspect-[16/10] max-h-[72vh] min-h-[380px] lg:min-h-[440px]">
             </div>
         </section>
 
-        <!-- PLAYER MANAGER (under Pitch) -->
-        <section class="panel" style="grid-area:left">
-            <div class="panel-title flex items-center justify-between">
-                <span>Player Manager</span>
-                <button id="putStartersOnPitch" class="btn-green hidden">Put Starters</button>
-            </div>
-            <!-- NEW: panel-body wrapper -->
-            <div class="panel-body">
-                <div class="text-[11px] opacity-70 mb-2">Team Line Up (All Players)</div>
-                <ul id="teamLineUpList" class="lineup text-sm"></ul>
-                <div class="flex gap-2 pt-2 sticky-actions">
-                    <button id="saveFormation" class="btn">Save</button>
-                    <button id="loadFormation" class="btn">Load</button>
-                    <button id="saveFormationToMatch" class="btn-indigo">Attach To Match</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- MATCH CONTROLS -->
         <section class="panel" style="grid-area:right">
             <div class="panel-title">Match Controls</div>
-            <!-- NEW: panel-body wrapper -->
-            <div class="panel-body">
-                <div class="space-y-2.5">
-                    <div class="flex gap-2">
-                        <select id="matchSelect" class="input flex-1">
-                            <option value="" disabled selected>— Select a match —</option>
-                        </select>
-                        <button id="newMatch" class="btn-green">New</button>
-                        <button id="deleteMatch" class="btn-rose">Delete</button>
-                    </div>
+            <div class="space-y-2.5">
+                <div class="flex gap-2">
+                    <select id="matchSelect" class="input flex-1">
+                        <option value="" disabled selected>— Select a match —</option>
+                    </select>
+                    <button id="newMatch" class="btn-green">New</button>
+                    <button id="deleteMatch" class="btn-rose">Delete</button>
+                </div>
 
-                    <div class="panel-subtitle">Match Events</div>
-                    <form id="eventForm" class="flex flex-col gap-2">
-                        <select id="eventType" class="input">
-                            <option value="Goal">Goal</option>
-                            <option value="Assist">Assist</option>
-                            <option value="Yellow/Red Card">Yellow/Red Card</option>
-                        </select>
-                        <select id="eventPlayer" class="input" required>
-                            <option value="" disabled selected>— Select Player —</option>
-                        </select>
-                        <select id="assistPlayer" class="input hidden">
-                            <option value="" selected>— Select Assist Player (optional) —</option>
-                        </select>
-                        <button class="btn-amber">Log Event</button>
-                    </form>
+                <div class="panel-subtitle">Match Events</div>
+                <form id="eventForm" class="flex flex-col gap-2">
+                    <select id="eventType" class="input">
+                        <option value="Goal">Goal</option>
+                        <option value="Assist">Assist</option>
+                        <option value="Yellow/Red Card">Yellow/Red Card</option>
+                    </select>
+                    <select id="eventPlayer" class="input" required>
+                        <option value="" disabled selected>— Select Player —</option>
+                    </select>
+                    <select id="assistPlayer" class="input hidden">
+                        <option value="" selected>— Select Assist Player (optional) —</option>
+                    </select>
+                    <button class="btn-amber">Log Event</button>
+                </form>
 
-                    <ul id="eventLog" class="list space-y-1 max-h-[28vh] overflow-auto"></ul>
-                    <div class="flex gap-2">
-                        <button id="exportCSV" class="btn">Export CSV</button>
-                        <button onclick="window.print()" class="btn">Print</button>
-                    </div>
+                <ul id="eventLog" class="list space-y-1 max-h-[28vh] overflow-auto"></ul>
+                <div class="flex gap-2">
+                    <button id="exportCSV" class="btn">Export CSV</button>
+                    <button onclick="window.print()" class="btn">Print</button>
                 </div>
             </div>
         </section>
 
-        <!-- GAME CHANGERS -->
-        <section class="panel" style="grid-area:bottom-right">
-            <div class="panel-title">Game Changers</div>
-            <!-- NEW: panel-body wrapper -->
-            <div class="panel-body">
-                <ul id="benchList" class="grid grid-cols-3 lg:grid-cols-4 gap-2"></ul>
-            </div>
+        <section class="panel" style="grid-area:bottom-left">
+            <div id="startersCounter" class="panel-title">Starters (0/9)</div>
+            <ul id="starterList" class="grid grid-cols-3 lg:grid-cols-4 gap-2"></ul>
         </section>
 
+        <section class="panel" style="grid-area:bottom-right">
+            <div class="panel-title">Game Changers</div>
+            <ul id="benchList" class="grid grid-cols-3 lg:grid-cols-4 gap-2"></ul>
+        </section>
     </main>
-
 
     <div id="playerEditorModal" class="pe-modal hidden">
         <div class="pe-backdrop"></div>
@@ -142,6 +129,7 @@
         </div>
     </div>
 
+    <!-- Built-in default players (used if no custom players are saved) -->
     <script id="playersData" type="application/json">
 [
 {"number":1,"name":"Player One","position":"GK","altPosition":"DEF","photo":"avatars/player1.jpg"},
@@ -159,7 +147,7 @@
 {"number":13,"name":"Player Thirteen","position":"DEF","altPosition":"MID","photo":"avatars/player13.jpg"},
 {"number":14,"name":"Player Fourteen","position":"MID","altPosition":"FWD","photo":"avatars/player14.jpg"}
 ]
-</script>
+  </script>
 
     <script>
         if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
