@@ -1,3 +1,4 @@
+/* === 3-column dashboard layout === */
 .grid-dashboard {
   display: grid;
   grid-template-columns: minmax(500px, 2fr) minmax(320px, 1fr) var(--right);
@@ -8,19 +9,20 @@
   gap: 1rem;
   align-items: stretch;
   height: calc(100vh - 150px);
-  /* Adjust for header height */
+  /* adjust if your header height differs */
 }
 
-/* Remove Starters panel */
+/* Remove Starters panel entirely (if any remnants exist) */
 [style*="grid-area:bottom-left"] {
   display: none !important;
 }
 
-/* Column containers with sticky headers */
+/* Panels behave like columns; titles stick; only .panel-body scrolls */
 .grid-dashboard>.panel {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* outer container doesn't scroll */
 }
 
 .panel .panel-title {
@@ -33,11 +35,34 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
-.panel>*:not(.panel-title) {
-  overflow-y: auto;
-  flex-grow: 1;
+/* NEW: dedicated scrollable area */
+.panel .panel-body {
+  flex: 1 1 auto;
   min-height: 0;
+  /* critical for nested scrolling */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
+
+/* Pitch needs to fill available height within its body */
+.panel-body--pitch {
+  display: flex;
+  flex-direction: column;
+}
+
+#formationField {
+  flex: 1 1 auto;
+  /* fill height inside pitch panel */
+}
+
+/* Keep Player Manager action bar sticky at the bottom of its scroll area */
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(11, 18, 32, 0), #0b1220 35%);
+  padding-top: .5rem;
+}
+
 
 /* Merge Pitch & Player Manager visually */
 [style*="grid-area:center"] {

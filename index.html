@@ -58,8 +58,11 @@
                     </select>
                 </div>
             </div>
-            <div id="formationField"
-                class="relative rounded-lg overflow-hidden border border-slate-800 w-full aspect-[16/10] max-h-[72vh] min-h-[380px] lg:min-h-[440px]">
+            <!-- NEW: panel-body wrapper -->
+            <div class="panel-body panel-body--pitch">
+                <div id="formationField"
+                    class="relative rounded-lg overflow-hidden border border-slate-800 w-full aspect-[16/10] max-h-[72vh] min-h-[380px] lg:min-h-[440px]">
+                </div>
             </div>
         </section>
 
@@ -69,47 +72,53 @@
                 <span>Player Manager</span>
                 <button id="putStartersOnPitch" class="btn-green hidden">Put Starters</button>
             </div>
-            <div class="text-[11px] opacity-70 mb-2">Team Line Up (All Players)</div>
-            <ul id="teamLineUpList" class="lineup text-sm"></ul>
-            <div class="flex gap-2 pt-2 sticky-actions">
-                <button id="saveFormation" class="btn">Save</button>
-                <button id="loadFormation" class="btn">Load</button>
-                <button id="saveFormationToMatch" class="btn-indigo">Attach To Match</button>
+            <!-- NEW: panel-body wrapper -->
+            <div class="panel-body">
+                <div class="text-[11px] opacity-70 mb-2">Team Line Up (All Players)</div>
+                <ul id="teamLineUpList" class="lineup text-sm"></ul>
+                <div class="flex gap-2 pt-2 sticky-actions">
+                    <button id="saveFormation" class="btn">Save</button>
+                    <button id="loadFormation" class="btn">Load</button>
+                    <button id="saveFormationToMatch" class="btn-indigo">Attach To Match</button>
+                </div>
             </div>
         </section>
 
         <!-- MATCH CONTROLS -->
         <section class="panel" style="grid-area:right">
             <div class="panel-title">Match Controls</div>
-            <div class="space-y-2.5">
-                <div class="flex gap-2">
-                    <select id="matchSelect" class="input flex-1">
-                        <option value="" disabled selected>— Select a match —</option>
-                    </select>
-                    <button id="newMatch" class="btn-green">New</button>
-                    <button id="deleteMatch" class="btn-rose">Delete</button>
-                </div>
+            <!-- NEW: panel-body wrapper -->
+            <div class="panel-body">
+                <div class="space-y-2.5">
+                    <div class="flex gap-2">
+                        <select id="matchSelect" class="input flex-1">
+                            <option value="" disabled selected>— Select a match —</option>
+                        </select>
+                        <button id="newMatch" class="btn-green">New</button>
+                        <button id="deleteMatch" class="btn-rose">Delete</button>
+                    </div>
 
-                <div class="panel-subtitle">Match Events</div>
-                <form id="eventForm" class="flex flex-col gap-2">
-                    <select id="eventType" class="input">
-                        <option value="Goal">Goal</option>
-                        <option value="Assist">Assist</option>
-                        <option value="Yellow/Red Card">Yellow/Red Card</option>
-                    </select>
-                    <select id="eventPlayer" class="input" required>
-                        <option value="" disabled selected>— Select Player —</option>
-                    </select>
-                    <select id="assistPlayer" class="input hidden">
-                        <option value="" selected>— Select Assist Player (optional) —</option>
-                    </select>
-                    <button class="btn-amber">Log Event</button>
-                </form>
+                    <div class="panel-subtitle">Match Events</div>
+                    <form id="eventForm" class="flex flex-col gap-2">
+                        <select id="eventType" class="input">
+                            <option value="Goal">Goal</option>
+                            <option value="Assist">Assist</option>
+                            <option value="Yellow/Red Card">Yellow/Red Card</option>
+                        </select>
+                        <select id="eventPlayer" class="input" required>
+                            <option value="" disabled selected>— Select Player —</option>
+                        </select>
+                        <select id="assistPlayer" class="input hidden">
+                            <option value="" selected>— Select Assist Player (optional) —</option>
+                        </select>
+                        <button class="btn-amber">Log Event</button>
+                    </form>
 
-                <ul id="eventLog" class="list space-y-1 max-h-[28vh] overflow-auto"></ul>
-                <div class="flex gap-2">
-                    <button id="exportCSV" class="btn">Export CSV</button>
-                    <button onclick="window.print()" class="btn">Print</button>
+                    <ul id="eventLog" class="list space-y-1 max-h-[28vh] overflow-auto"></ul>
+                    <div class="flex gap-2">
+                        <button id="exportCSV" class="btn">Export CSV</button>
+                        <button onclick="window.print()" class="btn">Print</button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -117,10 +126,14 @@
         <!-- GAME CHANGERS -->
         <section class="panel" style="grid-area:bottom-right">
             <div class="panel-title">Game Changers</div>
-            <ul id="benchList" class="grid grid-cols-3 lg:grid-cols-4 gap-2"></ul>
+            <!-- NEW: panel-body wrapper -->
+            <div class="panel-body">
+                <ul id="benchList" class="grid grid-cols-3 lg:grid-cols-4 gap-2"></ul>
+            </div>
         </section>
 
     </main>
+
 
     <div id="playerEditorModal" class="pe-modal hidden">
         <div class="pe-backdrop"></div>
