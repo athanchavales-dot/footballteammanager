@@ -1,351 +1,56 @@
-:root {
-  --sidebar: minmax(320px, 28rem);
-  --right: minmax(300px, 24rem);
-}
-
-.shell {
-  max-width: 2000px;
-  margin-inline: auto;
-}
-
-/* Buttons / Inputs */
-.btn {
-  background: #1f2937;
-  color: #e5e7eb;
-  border-radius: .35rem;
-  padding: .38rem .6rem;
-  border: 1px solid #334155;
-}
-
-.btn-green {
-  background: #059669;
-  color: #fff;
-  border: 1px solid #065f46;
-}
-
-.btn-amber {
-  background: #f59e0b;
-  color: #111827;
-  border: 1px solid #b45309;
-}
-
-.btn-rose {
-  background: #ef4444;
-  color: #fff;
-  border: 1px solid #991b1b;
-}
-
-.btn-blue {
-  background: #2563eb;
-  color: #fff;
-  border: 1px solid #1e40af;
-}
-
-.btn-indigo {
-  background: #4f46e5;
-  color: #fff;
-  border: 1px solid #3730a3;
-}
-
-.input {
-  background: #0b1220;
-  color: #e5e7eb;
-  border: 1px solid #334155;
-  border-radius: .35rem;
-  padding: .38rem .55rem;
-}
-
-/* Panels / Lists */
-.panel {
-  background: #0b1220;
-  border: 1px solid #1f2a44;
-  border-radius: .5rem;
-  padding: 12px;
-}
-
-.panel-title {
-  font-weight: 700;
-  color: #e2e8f0;
-  margin-bottom: .35rem;
-}
-
-.panel-subtitle {
-  font-weight: 600;
-  color: #cbd5e1;
-  margin-top: .35rem;
-}
-
-.list li {
-  padding: .25rem .5rem;
-  background: #0f172a;
-  border: 1px solid #1f2a44;
-  border-radius: .35rem;
-}
-
-/* Layout */
 .grid-dashboard {
   display: grid;
-  grid-template-columns: var(--sidebar) minmax(48rem, 1fr) var(--right);
-  grid-template-rows: auto auto;
+  grid-template-columns: minmax(500px, 2fr) minmax(320px, 1fr) var(--right);
+  grid-template-rows: auto 1fr;
   grid-template-areas:
-    "left center right"
-    "bottom-left bottom-left bottom-right";
+    "center bottom-right right"
+    "left   bottom-right right";
+  gap: 1rem;
+  align-items: stretch;
+  height: calc(100vh - 150px);
 }
 
-@media (max-width:1400px) {
-  .grid-dashboard {
-    grid-template-columns: var(--sidebar) 1fr var(--right);
-  }
+/* Panels: sticky titles, scrollable content */
+.grid-dashboard>.panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-@media (max-width:1100px) {
-  .grid-dashboard {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "center"
-      "right"
-      "left"
-      "bottom-left"
-      "bottom-right";
-  }
+.panel .panel-title {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: inherit;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
-@media (min-width: 1024px) {
-  #formationField {
-    min-height: 440px;
-  }
+.panel .panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-/* Pitch */
+/* Pitch fill height */
+.panel-body--pitch {
+  display: flex;
+  flex-direction: column;
+}
+
+#formationField {
+  flex: 1 1 auto;
+}
+
+/* Pitch background fix */
 #formationField {
   background-image: url("Field.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  width: 100%;
   aspect-ratio: 16 / 10;
   min-height: 380px;
   max-height: 72vh;
-}
-
-/* Player chips */
-.draggable-player {
-  position: absolute;
-  cursor: move;
-  background: transparent;
-  padding: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.draggable-player,
-.draggable-player * {
-  color: inherit !important;
-}
-
-.draggable-player:hover {
-  outline: 2px dashed rgba(255, 255, 255, .25);
-  outline-offset: 2px;
-}
-
-.draggable-player.drop-target {
-  outline: 3px dashed rgba(255, 255, 255, .35);
-  outline-offset: 2px;
-}
-.draggable-player img {
-  max-width: 44px;
-  max-height: 44px;
-  border-radius: 9999px;
-  object-fit: cover;
-}
-
-/* Player cards */
-.player-card {
-  background: #0f172a;
-  border: 1px solid #1f2a44;
-  border-radius: .55rem;
-  padding: .45rem;
-  line-height: 1.1;
-  transition: opacity .15s linear;
-}
-
-.player-card img {
-  width: 42px;
-  height: 42px;
-}
-
-.player-card.used {
-  opacity: .35;
-}
-
-.player-card.used img {
-  filter: grayscale(100%);
-}
-
-.player-card.disabled {
-  pointer-events: none;
-}
-
-#teamLineUpList.locked {
-  opacity: .55;
-  pointer-events: none;
-}
-
-.lineup {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: .5rem;
-}
-
-.sticky-actions {
-  position: sticky;
-  bottom: 0;
-  background: linear-gradient(180deg, rgba(11, 18, 32, 0), #0b1220 35%);
-  padding-top: .5rem;
-}
-
-/* Playtime bars */
-.pt-wrap {
-  margin-top: .2rem;
-}
-
-.pt-time {
-  font-size: .68rem;
-  line-height: .9rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  color: #cbd5e1;
-}
-
-.pt-bar {
-  height: 5px;
-  border-radius: 5px;
-  transition: width .25s ease;
-}
-
-.pt-bg {
-  background: #1f2937;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.pt-low {
-  background: #ef4444;
-}
-
-.pt-mid {
-  background: #f59e0b;
-}
-
-.pt-high {
-  background: #10b981;
-}
-
-/* Starters/Bench */
-#starterList .player-card,
-#benchList .player-card {
-  height: 160px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-}
-
-#starterList .player-card img,
-#benchList .player-card img {
-  width: 42px;
-  height: 42px;
-  object-fit: cover;
-}
-
-#starterList {
-  display: grid;
-  grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
-}
-
-#starterList .player-card {
-  flex: 0 0 95px;
-  height: 120px !important;
-  padding: .35rem !important;
-  font-size: .85em;
-}
-
-#starterList .player-card img {
-  width: 34px !important;
-  height: 34px !important;
-}
-
-/* Mobile tweaks */
-@media (max-width:640px) {
-  #starterList {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: .5rem;
-  }
-
-  .player-card,
-  .lineup-card {
-    min-height: 56px;
-  }
-
-  #putStartersBtn {
-    position: sticky;
-    bottom: 0;
-    z-index: 5;
-  }
-}
-
-/* Pitch player label */
-#formationField .draggable-player span {
-  color: #fff !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-  font-size: 10px;
-  line-height: 1.1;
-  font-weight: 500;
-  max-width: 84px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* Touch/drag behavior */
-html, body {
-  overscroll-behavior: contain;
-}
-
-#formationField, #formationField * {
-  touch-action: none;
-}
-
-#benchList, #benchList * {
-  touch-action: none;
-}
-
-/* Ghost drag */
-.drag-ghost {
-  position: fixed;
-  z-index: 9999;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-  width: 44px;
-  height: 44px;
-  border-radius: 9999px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
-}
-.pe-panel select,
-.pe-panel input[type="text"],
-.pe-panel input[type="number"] {
-  background: #0b1220;
-  color: #e5e7eb;
-  border: 1px solid #334155;
-  border-radius: .35rem;
-  padding: .4rem .5rem;
-  font-size: .85rem;
-  width: 100%;
-}
-
-.pe-table th {
-  text-align: left;
-  font-weight: 600;
-  color: #cbd5e1;
-  padding-bottom: .4rem;
-  font-size: .85rem;
 }
