@@ -1,6 +1,6 @@
 :root {
   --left: minmax(680px, 1fr);
-  --center: minmax(320px, 26rem);
+  --center: minmax(200px, 15rem);
   --right: minmax(320px, 24rem)
 }
 
@@ -619,3 +619,12 @@ body {
 
 /* Ensure the old .lineup grid does not reapply here */
 #playerManager .lineup{ display:flex !important; grid-template-columns:none !important; }
+
+
+/* Game Changers: vertical one-per-row, narrow center column */
+#benchList {
+  display: grid !important;
+  grid-template-columns: 1fr !important; /* one card per row */
+  gap: .5rem !important;
+}
+#benchList .player-card { width: 100%; }
