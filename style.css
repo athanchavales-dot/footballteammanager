@@ -152,6 +152,12 @@
   outline: 3px dashed rgba(255, 255, 255, .35);
   outline-offset: 2px;
 }
+.draggable-player img {
+  max-width: 44px;
+  max-height: 44px;
+  border-radius: 9999px;
+  object-fit: cover;
+}
 
 /* Player cards */
 .player-card {
@@ -324,4 +330,23 @@ html, body {
   height: 44px;
   border-radius: 9999px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
+}
+.pe-panel select,
+.pe-panel input[type="text"],
+.pe-panel input[type="number"] {
+  background: #0b1220;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+  border-radius: .35rem;
+  padding: .4rem .5rem;
+  font-size: .85rem;
+  width: 100%;
+}
+
+.pe-table th {
+  text-align: left;
+  font-weight: 600;
+  color: #cbd5e1;
+  padding-bottom: .4rem;
+  font-size: .85rem;
 }
