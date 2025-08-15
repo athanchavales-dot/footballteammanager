@@ -306,7 +306,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 /* Touch/drag behavior */
 html, body {
   overscroll-behavior: contain;
