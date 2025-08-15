@@ -76,3 +76,16 @@
   border-top-right-radius: 0;
   border-top: none;
 }
+
+/* Pitch background image + sizing */
+#formationField {
+  background-image: url("Field.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  aspect-ratio: 16 / 10;
+  height: auto;
+  /* derived from width */
+  min-height: 380px;
+  max-height: 72vh;
+}
