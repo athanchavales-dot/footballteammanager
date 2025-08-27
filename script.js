@@ -963,13 +963,3 @@ document.addEventListener('DOMContentLoaded', () => {
     finally { e.target.value = ''; }
   });
 });
-
-
-// Show toast message
-function showToast(message) {
-  const toast = document.createElement("div");
-  toast.innerText = message;
-  toast.className = "toast";
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
-}
