@@ -16,7 +16,6 @@ const SHELL_ASSETS = [
   "./players.json",             // keep this
 ];
 
-
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(PRECACHE).then((cache) => cache.addAll(SHELL_ASSETS)));
   self.skipWaiting();

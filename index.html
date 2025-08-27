@@ -17,29 +17,12 @@
 <body class="bg-slate-900 text-slate-100">
   <header class="w-full border-b border-slate-800 bg-slate-950">
     <!-- Backup / Restore -->
-    <div class="backup-controls" style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0;">
-      <button class="btn" id="exportBtn">Export Data</button>
-      <label class="btn" style="cursor:pointer;">
-        Import Data
-        <input accept="application/json" hidden="" id="importInput" type="file" />
-      </label>
-    </div>
+    <div class="backup-controls" style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0;"></div>
     <div class="shell px-3 sm:px-4 py-2.5 flex items-center gap-3">
       <img alt="Club Logo" class="w-7 h-7" src="logo.png" />
       <div class="font-semibold tracking-wide">U12 Football Team Manager</div>
-      <div class="ml-auto flex flex-wrap items-center gap-2">
-        <span class="font-mono text-base px-2 py-1 bg-slate-800 rounded" id="matchTimer">00:00</span>
-        <button class="btn-green" id="startTimer">Start</button>
-        <button class="btn-amber" id="pauseTimer">Pause</button>
-        <button class="btn-rose" id="resetTimer">Reset</button>
-        <input class="input w-14" id="halfLengthInput" max="50" min="5" type="number" value="35">
-        <button class="btn" id="startFirstHalf">Start 1st</button>
-        <button class="btn" id="startSecondHalf">Start 2nd</button>
-        <span class="text-[11px] px-2 py-1 bg-slate-800 rounded">
-          Half: <b id="currentHalfLabel">—</b> • Remaining: <b id="remainingTime">00:00</b>
-        </span>
-        <button class="btn-blue" id="openPlayerEditor">Edit Players</button>
-        </input>
+      <div class="ml-auto flex flex-wrap items-center gap-2"><button class="btn-blue" id="openPlayerEditor">Edit Players</button>
+        
       </div>
     </div>
   </header>
@@ -79,6 +62,19 @@
     <section class="panel" style="grid-area:right">
       <div class="panel-title">Match Controls</div>
       <div class="space-y-2.5">
+        <div class="flex flex-wrap items-center gap-2">
+        <span class="font-mono text-base px-2 py-1 bg-slate-800 rounded" id="matchTimer">00:00</span>
+        <button class="btn-green" id="startTimer">Start</button>
+        <button class="btn-amber" id="pauseTimer">Pause</button>
+        <button class="btn-rose" id="resetTimer">Reset</button>
+        <input class="input w-14" id="halfLengthInput" max="50" min="5" type="number" value="35">
+        <button class="btn" id="startFirstHalf">Start 1st</button>
+        <button class="btn" id="startSecondHalf">Start 2nd</button>
+        <span class="text-[11px] px-2 py-1 bg-slate-800 rounded">
+          Half: <b id="currentHalfLabel">—</b> • Remaining: <b id="remainingTime">00:00</b>
+        </span>
+        </div>
+
         <div class="flex gap-2">
           <select class="input flex-1" id="matchSelect">
             <option disabled="" selected="" value="">— Select a match —</option>

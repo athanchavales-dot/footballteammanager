@@ -708,7 +708,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, { passive:false });
   })();
 
-
   // Drag helpers for players
   function makeDraggable(el) {
     let offsetX, offsetY;
