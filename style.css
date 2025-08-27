@@ -628,3 +628,52 @@ body {
   gap: .5rem !important;
 }
 #benchList .player-card { width: 100%; }
+
+
+/* === Tablet Optimizations === */
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .formation-area, .player-list {
+    flex-direction: column;
+    align-items: center;
+  }
+  .formation-area {
+    background-size: contain;
+    background-position: center;
+  }
+}
+
+/* Larger tap targets */
+button, .player {
+  padding: 12px !important;
+  font-size: 1.2em !important;
+}
+
+/* Dropzone visual feedback */
+.dropzone.highlight {
+  border: 2px dashed yellow;
+}
+
+/* Toast message styling */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  z-index: 1000;
+  opacity: 0.9;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #121212;
+    color: #f1f1f1;
+  }
+}
